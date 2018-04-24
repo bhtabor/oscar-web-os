@@ -99,14 +99,14 @@ class FamilyGrid
   end
 
   column(:case_workers, html: true, header: -> { I18n.t('datagrid.columns.families.case_workers') }) do |object|
-    render partial: 'families/case_workers', locals: { object: object.cases.non_emergency.active }
+    render partial: 'families/case_workers', locals: { object: object.children }
   end
 
   column(:significant_family_member_count, header: -> { I18n.t('datagrid.columns.families.significant_family_member_count') })
-  column(:female_children_count, header: -> { I18n.t('datagrid.columns.families.female_children_count') }, html: false)
-  column(:male_children_count, header: -> { I18n.t('datagrid.columns.families.male_children_count') }, html: false)
-  column(:female_adult_count, header: -> { I18n.t('datagrid.columns.families.female_adult_count') }, html: false)
-  column(:male_adult_count, header: -> { I18n.t('datagrid.columns.families.male_adult_count') }, html: false)
+  column(:female_children_count, header: -> { I18n.t('datagrid.columns.families.female_children_count') })
+  column(:male_children_count, header: -> { I18n.t('datagrid.columns.families.male_children_count') })
+  column(:female_adult_count, header: -> { I18n.t('datagrid.columns.families.female_adult_count') })
+  column(:male_adult_count, header: -> { I18n.t('datagrid.columns.families.male_adult_count') })
   column(:contract_date, header: -> { I18n.t('datagrid.columns.families.contract_date') })
 
   column(:province, order: 'provinces.name', header: -> { I18n.t('datagrid.columns.families.province') }) do |object|
@@ -118,7 +118,7 @@ class FamilyGrid
   end
 
   column(:case_workers, header: -> { I18n.t('datagrid.columns.families.case_workers') }, html: false) do |object|
-    user_ids = Client.joins(:cases).where(cases: { id: object.cases.non_emergency.active.ids }).joins(:case_worker_clients).map(&:user_ids).flatten.uniq
+    user_ids = Client.where(id: object.children).joins(:case_worker_clients).map(&:user_ids).flatten.uniq
     User.where(id: user_ids).map{|u| u.name }.join(', ')
   end
 

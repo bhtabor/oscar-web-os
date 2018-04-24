@@ -46,7 +46,7 @@ module ClientEnrollmentHelper
   end
 
   def client_enrollment_new_link(program_stream)
-    if program_permission_editable?(program_stream)
+    if program_permission_editable?(program_stream) && policy(@client).create?
       link_to new_client_client_enrollment_path(@client, program_stream_id: program_stream.id) do
         content_tag :div, class: 'btn btn-primary btn-xs btn-width' do 
           t('.enroll')

@@ -124,12 +124,11 @@ class CIF.ClientAdvanceSearch
       _.forEach values, (value) ->
         fieldName = value.id
         keyword   = _.first(fieldName.split('_'))
-        if keyword != 'enrollmentdate' and keyword != 'programexitdate'
-          checkField  = fieldName
-          label       = value.label
-          $(customFormColumnPicker).append(self.checkboxElement(checkField, headerClass, label))
-          $(".#{headerClass} input.i-checks").iCheck
-            checkboxClass: 'icheckbox_square-green'
+        checkField  = fieldName
+        label       = value.label
+        $(customFormColumnPicker).append(self.checkboxElement(checkField, headerClass, label))
+        $(".#{headerClass} input.i-checks").iCheck
+          checkboxClass: 'icheckbox_square-green'
 
   formBuiderFormatHeader: (value) ->
     keyWords = value.split('|')
@@ -151,7 +150,7 @@ class CIF.ClientAdvanceSearch
 
       $('#custom-form-select option:selected').each ->
         formTitle = $(@).text()
-        handleRemoveFilterBuilder(formTitle, self.CUSTOM_FORM_TRANSLATE)
+        self.handleRemoveFilterBuilder(formTitle, self.CUSTOM_FORM_TRANSLATE)
 
       self.customFormSelected = []
       $('.custom-form select').select2('val', '')
@@ -366,6 +365,20 @@ class CIF.ClientAdvanceSearch
         self.handleSelectFieldVisibilityCheckBox()
         $('#advanced-search').submit()
 
+  handlePartnerSearch: ->
+    self = @
+    $('#search').on 'click', ->
+      basicRules = $('#builder').queryBuilder('getRules', { skip_empty: true, allow_invalid: true })
+      customFormValues = if self.customFormSelected.length > 0 then "[#{self.customFormSelected}]"
+
+      $('#partner_advanced_search_custom_form_selected').val(customFormValues)
+
+      if (_.isEmpty(basicRules.rules) and !basicRules.valid) or (!(_.isEmpty(basicRules.rules)) and basicRules.valid)
+        $('#builder').find('.has-error').remove()
+        $('#partner_advanced_search_basic_rules').val(self.handleStringfyRules(basicRules))
+        self.handleSelectFieldVisibilityCheckBox()
+        $('#advanced-search').submit()
+
   setValueToProgramAssociation: ->
     enrollmentCheck = $('#client_advanced_search_enrollment_check')
     trackingCheck   = $('#client_advanced_search_tracking_check')
@@ -457,8 +470,11 @@ class CIF.ClientAdvanceSearch
 
   handleSaveQuery: ->
     self = @
-    $('#submit-query').on 'click', ->
+    $('#submit-query').on 'click', (e)->
       basicRules = $('#builder').queryBuilder('getRules', { skip_empty: true, allow_invalid: true })
+      if basicRules.valid == false && basicRules.rules.length > 0
+        e.preventDefault()
+        $('#save-query').modal('hide')
       if (_.isEmpty(basicRules.rules) and !basicRules.valid) or (!(_.isEmpty(basicRules.rules)) and basicRules.valid)
         $('#builder').find('.has-error').remove()
       customFormValues = if self.customFormSelected.length > 0 then "[#{self.customFormSelected}]"

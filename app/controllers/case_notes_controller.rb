@@ -2,6 +2,8 @@ class CaseNotesController < AdminController
   load_and_authorize_resource
   before_action :set_client
   before_action :set_case_note, only: [:edit, :update]
+  before_action :authorize_client, only: [:new, :create]
+  before_action :authorize_case_note, only: [:edit, :update]
   before_action -> { case_notes_permission('readable') }, only: [:index]
   before_action -> { case_notes_permission('editable') }, except: [:index]
 
@@ -39,7 +41,6 @@ class CaseNotesController < AdminController
   end
 
   def update
-    authorize @case_note
     if @case_note.update_attributes(case_note_params) && @case_note.save
       params[:case_note][:case_note_domain_groups_attributes].each do |d|
         add_more_attachments(d.second[:attachments], d.second[:id])
@@ -96,6 +97,14 @@ class CaseNotesController < AdminController
 
   def set_case_note
     @case_note = @client.case_notes.find(params[:id])
+  end
+
+  def authorize_case_note
+    authorize @case_note
+  end
+
+  def authorize_client
+    authorize @client, :create?
   end
 
   def case_notes_permission(permission)

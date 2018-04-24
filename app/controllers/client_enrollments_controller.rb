@@ -26,8 +26,8 @@ class ClientEnrollmentsController < AdminController
     elsif @program_stream.has_program_exclusive? || @program_stream.has_mutual_dependence?
       client_enrollment_index_path unless valid_program?
     end
-
-    @client_enrollment = @client.client_enrollments.new(program_stream_id: @program_stream)
+    authorize(@client) && authorize(@client_enrollment)
+    @client_enrollment = @client.client_enrollments.new(program_stream_id: @program_stream.id)
     @attachment        = @client_enrollment.form_builder_attachments.build
   end
 
@@ -48,7 +48,7 @@ class ClientEnrollmentsController < AdminController
 
   def create
     @client_enrollment = @client.client_enrollments.new(client_enrollment_params)
-    authorize @client_enrollment
+    authorize(@client) && authorize(@client_enrollment)
     if @client_enrollment.save
       redirect_to client_client_enrolled_program_path(@client, @client_enrollment, program_stream_id: @program_stream), notice: t('.successfully_created')
     else

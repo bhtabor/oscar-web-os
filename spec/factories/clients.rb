@@ -27,7 +27,13 @@ FactoryGirl.define do
     end
 
     trait :accepted do
-      state 'accepted'
+      status 'Accepted'
+    end
+
+    trait :exited do
+      after(:create) do |client|
+        create(:exit_ngo, client: client)
+      end
     end
 
     trait :female do

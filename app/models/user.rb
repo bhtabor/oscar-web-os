@@ -29,6 +29,8 @@ class User < ActiveRecord::Base
   has_many :progress_notes, dependent: :restrict_with_error
   has_many :case_worker_clients, dependent: :restrict_with_error
   has_many :clients, through: :case_worker_clients
+  has_many :enter_ngo_users, dependent: :destroy
+  has_many :enter_ngos, through: :enter_ngo_users
   has_many :tasks, dependent: :destroy
   has_many :calendars, dependent: :destroy
   has_many :visits,  dependent: :destroy
@@ -66,6 +68,7 @@ class User < ActiveRecord::Base
   scope :non_strategic_overviewers, -> { where.not(roles: 'strategic overviewer') }
   scope :staff_performances,        -> { where(staff_performance_notification: true) }
   scope :non_devs,                  -> { where.not(email: [ENV['DEV_EMAIL'], ENV['DEV2_EMAIL'], ENV['DEV3_EMAIL']]) }
+  scope :non_locked,                -> { where(disable: false) }
 
   before_save :assign_as_admin
   before_save  :set_manager_ids, if: 'manager_id_changed?'
@@ -135,7 +138,7 @@ class User < ActiveRecord::Base
   def assessment_either_overdue_or_due_today
     overdue   = []
     due_today = []
-    clients.all_active_types_and_referred_accepted.each do |client|
+    clients.active_accepted_status.each do |client|
       client_next_asseement_date = client.next_assessment_date.to_date
       if client_next_asseement_date < Date.today
         overdue << client
@@ -147,11 +150,11 @@ class User < ActiveRecord::Base
   end
 
   def assessments_overdue
-    clients.all_active_types_and_referred_accepted
+    clients.active_accepted_status
   end
 
   def client_custom_field_frequency_overdue_or_due_today
-    entity_type_custom_field_notification(clients.all_active_types_and_referred_accepted)
+    entity_type_custom_field_notification(clients.active_accepted_status)
   end
 
   def user_custom_field_frequency_overdue_or_due_today
@@ -175,27 +178,31 @@ class User < ActiveRecord::Base
   end
 
   def client_enrollment_tracking_overdue_or_due_today
-    client_enrollment_tracking_notification(clients.all_active_types_and_referred_accepted)
+    client_enrollment_tracking_notification(clients.active_accepted_status)
+  end
+
+  def case_note_overdue_and_due_today
+    overdue   = []
+    due_today = []
+    clients.active_accepted_status.each do |client|
+      client_next_case_note_date = client.next_case_note_date.to_date
+      if client_next_case_note_date < Date.today
+        overdue << client
+      elsif client_next_case_note_date == Date.today
+        due_today << client
+      end
+    end
+    { client_overdue: overdue, client_due_today: due_today }
   end
 
   def self.self_and_subordinates(user)
     if user.admin? || user.strategic_overviewer?
       User.all
-    elsif user.manager?
+    elsif user.manager? || user.any_case_manager?
       User.where('id = :user_id OR manager_ids && ARRAY[:user_id]', { user_id: user.id })
     elsif user.able_manager?
       user_ids = Client.able.joins(:users).pluck('users.id') << user.id
       User.where(id: user_ids.uniq)
-    elsif user.any_case_manager?
-      user_ids = [user.id]
-      if user.ec_manager?
-        user_ids << Client.active_ec.joins(:users).pluck('users.id')
-      elsif user.fc_manager?
-        user_ids << Client.active_fc.joins(:users).pluck('users.id')
-      elsif user.kc_manager?
-        user_ids << Client.active_kc.joins(:users).pluck('users.id')
-      end
-      User.where(id: user_ids.flatten.uniq)
     end
   end
 

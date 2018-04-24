@@ -32,7 +32,7 @@ class DashboardsController < AdminController
     clients_duetoday = []
     clients_upcoming = []
     clients = []
-    Client.all_active_types_and_referred_accepted.each do |client|
+    Client.active_accepted_status.each do |client|
       overdue_tasks = []
       today_tasks = []
       upcoming_tasks = []
@@ -43,9 +43,9 @@ class DashboardsController < AdminController
       today_forms = []
       upcoming_forms = []
       if @task_params
-        overdue_tasks << client.tasks.exclude_exited_ngo_clients.of_user(@user).overdue_incomplete
-        today_tasks << client.tasks.exclude_exited_ngo_clients.of_user(@user).today_incomplete
-        upcoming_tasks << client.tasks.exclude_exited_ngo_clients.of_user(@user).upcoming_within_three_months
+        overdue_tasks << client.tasks.incomplete.exclude_exited_ngo_clients.of_user(@user).overdue_incomplete
+        today_tasks << client.tasks.incomplete.exclude_exited_ngo_clients.of_user(@user).today_incomplete
+        upcoming_tasks << client.tasks.incomplete.exclude_exited_ngo_clients.of_user(@user).upcoming_within_three_months
       end
 
       if @form_params && client.user_ids.include?(@user.id)

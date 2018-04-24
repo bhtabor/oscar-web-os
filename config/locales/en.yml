@@ -238,6 +238,20 @@ en:
             name:
               blank: can't be blank
               taken: has already been taken
+        setting:
+          attributes:
+            max_assessment:
+              blank: can't be blank
+              greater_than:
+                one: must be grater than Minimum
+                other: must be greater than %{count}
+            max_case_note:
+              blank: can't be blank
+            min_assessment:
+              blank: can't be blank
+              less_than:
+                one: must be less than Maximum
+                other: must be less than %{count}
         stage:
           attributes:
             from_age:
@@ -299,10 +313,13 @@ en:
       donor: Donor
       donor_id: Donor
       enrollment: Enrollment
+      exit_circumstance: Exit Circumstance
       exit_ec_date: Exit EC Date
       exit_fc_date: Exit FC Date
       exit_kc_date: Exit KC Date
+      exit_note: NGO Exit Note
       exit_program: Exit Program
+      exit_reasons: Reason For Exit
       family: Family
       family_id: Family ID
       family_name: Family Name (English)
@@ -325,14 +342,18 @@ en:
       live_with: Primary Carer Name
       local_family_name: Family Name (Khmer)
       local_given_name: Given Name (Khmer)
+      main_school_contact: Main School Contact
       name: Name
+      name_of_referee: Name of Referee
       ngo_accepted_date: NGO Accept Date
       ngo_exit_date: NGO Exit Date
+      other_info_of_exit: Other - More Information
       placement_start_date: Placement Start Date
       program_stream: Program Stream
       province: Birth Province
       province_id: Current Province
       quantitative: Specific Referral Data
+      rated_for_id_poor: Is The Client Rated For ID Poor
       received_by: Referral Received By
       received_by_id: Received By
       referral_phone: Referee Phone Number
@@ -355,6 +376,7 @@ en:
       type: Type
       user_id: Case Worker
       village: Village
+      what3words: What3words
   advanced_search_save_queries:
     create:
       failed_create: Search setting has already been taken.
@@ -674,6 +696,55 @@ en:
         one: You have 1 assessment overdue.
         other: You have %{count} assessments overdue.
   client:
+    enter_ngos:
+      create:
+        failed_create: Failed to update the client.
+        successfully_created: Client has been successfully updated.
+      edit_form:
+        accept: Accept
+        accept_ngo_form: Enter NGO Form
+        accepted_date: Accepted Date
+        case_worker_or_staff: Case Worker / Staff
+      form:
+        accept: Accept
+        accept_ngo_form: Enter NGO Form
+        accepted_date: Accepted Date
+        case_worker_or_staff: Case Worker / Staff
+      update:
+        failed_update: Failed to update the client.
+        successfully_updated: Client has been successfully updated.
+    exit_ngos:
+      create:
+        failed_create: Failed to update the client.
+        successfully_created: Client has been successfully updated.
+      edit_form:
+        case_worker_or_staff: Case Worker / Staff
+        exit_btn: Exit
+        exit_circumstance: Exit Circumstance
+        exit_date: Exit Date
+        exit_ngo: Exit Client from NGO
+        exit_note: Exit Note
+        exit_reasons: Reason for Exit / Case Rejection
+        exit_status: Status
+        other_info_of_exit: Other - More Information
+        reject_client: Reject Client
+        rejected_note: Rejected Note
+      form:
+        case_worker_or_staff: Case Worker / Staff
+        exit_btn: Exit
+        exit_circumstance: Exit Circumstance
+        exit_date: Exit Date
+        exit_ngo: Exit Client from NGO
+        exit_note: Exit Note
+        exit_reasons: Reason for Exit / Case Rejection
+        exit_status: Status
+        other_info_of_exit: Other - More Information
+        reject_client: Reject Client
+        rejected_note: Rejected Note
+      update:
+        failed_update: Failed to update the client.
+        successfully_updated: Client has been successfully updated.
+
     # form_option:
     #   basic_fields: Client Basic Fields
     #   csi_domain_scores: CSI Domain Scores
@@ -987,6 +1058,11 @@ en:
       start_date: Start Date
       support_amount: Support Amount
       support_note: Support Note
+    enter_ngo_form:
+      accept: Accept
+      accept_ngo_form: Enter Ngo Form
+      accepted_date: Accepted Date
+      case_worker_or_staff: Case Worker / Staff
     exit_case_form:
       exit_btn: Exit
       exit_date: Exit Date
@@ -997,11 +1073,17 @@ en:
       exit_note: Exit Note
       exit_status: Status
     exit_ngo_form:
+      case_worker_or_staff: Case Worker / Staff
       exit_btn: Exit
+      exit_circumstance: Exit Circumstance
       exit_date: Exit Date
-      exit_ngo: Exit NGO
+      exit_ngo: Exit Client from NGO
       exit_note: Exit Note
+      exit_reasons: Reason for Exit / Case Rejection
       exit_status: Status
+      other_info_of_exit: Other - More Information
+      reject_client: Reject Client
+      rejected_note: Rejected Note
     form:
       able: Able
       able_state: Able State
@@ -1093,7 +1175,8 @@ en:
       village: Village
       year: Year
       yes_no: Yes/No
-
+    form_header:
+      case_worker_or_staff: Case Worker / Staff
     foster_case:
       carer_address: Carer Address
       carer_names: Carer Names
@@ -1260,13 +1343,18 @@ en:
       date_of_birth: Date of Birth
       district: District/Khan
       donor: Donor
+      edit_exit_information: Edit Exit Information
       enrolled_program_streams: Enrolled Program Streams
+      enter_ngo_information: Enter NGO Information
+      exit_circumstance: Exit Circumstance
       exit_date: NGO Exit Date
       exit_from_ec: Exit From EC
       exit_from_fc: Exit From FC
       exit_from_kc: Exit From KC
       exit_ngo_btn: Exit From NGO
+      exit_ngo_information: Exit NGO Information
       exit_note: Exit Note
+      exit_reasons: Reason for Exit / Case Rejection
       families: Families
       family_name: Family Name (English)
       follow_up_by: First Follow-Up By
@@ -1294,12 +1382,15 @@ en:
       local_family_name: Family Name (Khmer)
       local_given_name: Given Name (khmer)
       main_school_contact: Main School Contact
+      manage: Manage
       name: Name
       note: Note
       name_of_referee: Name Of Referee
+      other_info_of_exit: Other - More Information
       primary_carer_name: Primary Carer Name
       primary_carer_phone_number: Primary Carer Phone Number
       referee_phone_number: Referee Phone Number
+      rejected_note: Rejected Note
 
       placements:
         carer_address: Carer Address
@@ -1538,6 +1629,9 @@ en:
         domain: Domain
         domains: All CSI
         donor: Donor
+        exit_circumstance: Exit Circumstance
+        exit_note: NGO Exit Note
+        exit_reasons: Reason For Exit
         family_id: Family ID
         family_name: Family Name (English)
         follow_up_by: First Follow-Up By
@@ -1563,12 +1657,15 @@ en:
         live_with: Primary Carer Name
         local_family_name: Family Name (Khmer)
         local_given_name: Given Name (khmer)
+        main_school_contact: Main School Contact
         manage: Manage
         myanmar: Myanmar
         name: Name
+        name_of_referee: Name of Referee
         ngo_accepted_date: NGO Accept Date
         ngo_exit_date: NGO Exit Date
         no_dob: 'No'
+        other_info_of_exit: Other - More Information
         placement_case_type: Placement Case Type
         placement_start_date: Placement Start Date
         placements:
@@ -1593,6 +1690,7 @@ en:
         province: Birth Province
         quantitative_case_values: Specific Referral Data Option
         quantitative_types: Specific Referral Data
+        rated_for_id_poor: Is The Client Rated For ID Poor
         reason_for_family_separation: Reason for Family Separation
         received_by: Referral Received By
         referral_information: Referral Information
@@ -1615,7 +1713,11 @@ en:
         type: Type
         view: View
         village: Village
+        what3words: What3words
       date_of_assessments: Date of Assessments
+      exit_circumstance: Exit Circumstance
+      exit_note: NGO Exit Note
+      exit_reasons: Reason For Exit
       families:
         address: Address
         caregiver_information: Caregiver Information
@@ -1655,7 +1757,10 @@ en:
       history_of_disability_and_or_illness: History of disability and/or illness
       history_of_harm: History of Harm
       history_of_high_risk_behaviours: History of high-risk behaviours
+      main_school_contact: Main School Contact
       manage: Manage
+      name_of_referee: Name of Referee
+      other_info_of_exit: Other - More Information
       partner: Partner
       partners:
         address: Address
@@ -1666,6 +1771,7 @@ en:
         contact_mobile: Contact Mobile
         contact_name: Contact Name
         engagement: Engagement
+        form_title: Form Title
         id: ID
         manage: Manage
         name: Name
@@ -1703,6 +1809,7 @@ en:
         kc_name: KC Name
         staff_information: Staff Information
         visit_date: Date Of Visit
+      rated_for_id_poor: Is The Client Rated For ID Poor
       reason_for_family_separation: Reason for Family Separation
       rejected_note: Note on referral rejection
       select_columns: Select Columns
@@ -1740,6 +1847,7 @@ en:
         roles: Permission Set
         start_date: Start Date
         view: View
+      what3words: What3words
     filters:
       dynamic:
         operations:
@@ -1756,7 +1864,7 @@ en:
       has_overdue_assessment: Has Overdue Assessment
       has_overdue_forms: Has Overdue Form
       has_overdue_task: Has Overdue Task
-      no_case_note: No Casenote in 30 Days
+      no_case_note: Overdue for Case Note
       reset: Reset
       search: Search
     from: From
@@ -2871,6 +2979,12 @@ en:
     notification:
       check_tasks: To check your tasks, please
       click_here: click here.
+      client_case_note_due_today:
+        one: You have 1 case note due today.
+        other: You have %{count} case notes due today.
+      client_case_note_overdue:
+        one: You have 1 case note overdue.
+        other: You have %{count} case notes overdue.
       client_is_about_to_end_ec:
         one: There is a client is about to exit EC program in %{day_count} days.
         other: There are %{count} clients are about to exit EC program in %{day_count} days.
@@ -2933,8 +3047,11 @@ en:
       agencies: Agencies
       changelogs: Changelogs
       clients: Clients
+      country: Country
+      csi_tools: CSI Tools
       custom_fields: Form Builder
       dashboards: Dashboards
+      default_columns: Default Columns
       departments: Departments
       districts: Districts
       domain_groups: Domain Groups
@@ -2958,7 +3075,6 @@ en:
       quantitative_types: Specific Referral Data
       referral_sources: Referral Sources
       release_logs: Release logs
-      settings: Settings
       users: Users
       view_calendar: View Calendar
     top_navbar:
@@ -3071,6 +3187,12 @@ en:
   must_be_uniq: field label must be uniq
   mutual_dependence_has_been_modified: Prerequisite Programs cannot be changed or added because it breaks the previous conditions.
   notifications:
+    case_note_due_today:
+      client_case_note_due_today: Client Case Note Due Today
+      review_client: Clients need to be reviewed
+    case_note_overdue:
+      client_case_note_overdue: Client Case Note Overdue
+      review_client: Clients need to be reviewed
     client_enrollment_tracking_due_today:
       client_enrollment_tracking_notification: Client Enrollment Tracking Notification
       clients: Client
@@ -3125,9 +3247,26 @@ en:
     index:
       add_new_partner: Add New Partner
       export_xls: Export to XLS
+      report_builder: Report Builder
       results: Results
     new:
       new_partner_title: New Partner
+    partner_advanced_searches:
+      advanced_search:
+        add_new_filter: Add New Filter
+        add_new_group: Add Group
+        advanced_search: Advanced Search
+        partner_column: Partner basic columns
+        custom_form_column: Custom form columns
+        delete_group: Delete
+        no_results: No Result Found
+        reset: Reset
+        results: Results
+        search: Search
+      form_option:
+        basic_fields: Basic Fields
+        custom_form: Custom Form
+        filter_option: Please choose your query options below
     show:
       add_form: Add Form
       additional_forms: Additional Forms
@@ -3544,14 +3683,32 @@ en:
       your_account_needs_to_supply_a_verification_code: Your account needs to supply a verification code.
       bad_credentials_supplied: Bad Credentials Supplied.
   settings:
+    assessment:
+      assessment: CSI Assessment Frequency Settings
+      disable_assessment: We are not using CSI Assessment Tool
+      max_assessment: Maximum time between assessments
+      min_assessment: Minimum time between 1st and 2nd assessment
+    case_note:
+      case_note: Maximum time between case notes for client
+      max_case_note: Maximum
     country:
-      settings: Settings
+      country: Country
       switched_country_cambodia: You’ve switched your country setting to Cambodia.
       switched_country_lesotho: You’ve switched your country setting to Lesotho.
       switched_country_myanmar: You’ve switched your country setting to Myanmar.
       switched_country_thailand: You’ve switched your country setting to Thailand.
-    navigation:
-      country: Country
+    create:
+      successfully_created: Setting have been successfully created.
+    default_columns:
+      client_default_columns: Client
+      default_columns: Default Columns
+      family_default_columns: Family
+      partner_default_columns: Partner
+    index:
+      csi_tools: CSI Tools
+    update:
+      successfully_updated: Setting have been successfully updated.
+
   shared:
     form_builder:
       file_field:

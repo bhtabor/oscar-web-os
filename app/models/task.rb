@@ -21,7 +21,7 @@ class Task < ActiveRecord::Base
   scope :today_incomplete,   -> { incomplete.today }
   scope :by_domain_id,       ->(value) { where('domain_id = ?', value) }
   scope :overdue_incomplete_ordered, -> { overdue_incomplete.order('completion_date ASC') }
-  scope :exclude_exited_ngo_clients, -> { where(client_id: Client.all_active_types_and_referred_accepted.ids) }
+  scope :exclude_exited_ngo_clients, -> { where(client_id: Client.active_accepted_status.ids) }
 
   after_save :create_task_history
 
@@ -49,7 +49,7 @@ class Task < ActiveRecord::Base
       Organization.switch_to org.short_name
       tasks    = incomplete.where(completion_date: Date.tomorrow).exclude_exited_ngo_clients
       user_ids = tasks.map(&:user_id).flatten.uniq
-      users    = User.non_devs.where(id: user_ids)
+      users    = User.non_devs.non_locked.where(id: user_ids)
       users.each do |user|
         CaseWorkerMailer.tasks_due_tomorrow_of(user).deliver_now
       end
