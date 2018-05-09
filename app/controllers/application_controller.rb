@@ -16,7 +16,13 @@ class ApplicationController < ActionController::Base
   helper_method :current_organization
 
   rescue_from CanCan::AccessDenied do |exception|
-    redirect_to root_url, alert: exception.message
+    # redirect_to root_url, alert: exception.message
+    if exception.subject.inspect.include?("Client") && (exception.action).to_s.include?("show")
+      flash[:notice] = t('unauthorized.case_worker_unauthorized')
+    else
+      flash[:alert] = t('unauthorized.default')
+    end
+    redirect_to root_path
   end
 
   rescue_from Pundit::NotAuthorizedError do |exception|
@@ -61,7 +67,7 @@ class ApplicationController < ActionController::Base
   end
 
   def default_url_options(options = {})
-    country = params[:country] || 'cambodia'
+    country = Setting.first.try(:country_name) || params[:country] || 'cambodia'
     { locale: I18n.locale, country: country }.merge(options)
   end
 
