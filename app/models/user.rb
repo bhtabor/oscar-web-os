@@ -2,7 +2,7 @@ class User < ActiveRecord::Base
   include EntityTypeCustomField
   include EntityTypeCustomFieldNotification
   include NextClientEnrollmentTracking
-  include ClientEnrollmentTrackingNotification
+  include ClientOverdueAndDueTodayForms
 
   ROLES = ['admin', 'manager', 'case worker', 'strategic overviewer'].freeze
   MANAGERS = ROLES.select { |role| role if role.include?('manager') }
@@ -26,7 +26,6 @@ class User < ActiveRecord::Base
 
   has_many :advanced_searches, dependent: :destroy
   has_many :changelogs, dependent: :restrict_with_error
-  has_many :progress_notes, dependent: :restrict_with_error
   has_many :case_worker_clients, dependent: :restrict_with_error
   has_many :clients, through: :case_worker_clients
   has_many :enter_ngo_users, dependent: :destroy
@@ -68,6 +67,7 @@ class User < ActiveRecord::Base
   scope :staff_performances,        -> { where(staff_performance_notification: true) }
   scope :non_devs,                  -> { where.not(email: [ENV['DEV_EMAIL'], ENV['DEV2_EMAIL'], ENV['DEV3_EMAIL']]) }
   scope :non_locked,                -> { where(disable: false) }
+  scope :notify_email,             -> { where(task_notify: true) }
 
   before_save :assign_as_admin
 
@@ -124,7 +124,7 @@ class User < ActiveRecord::Base
   end
 
   def no_any_associated_objects?
-    clients.count.zero? && changelogs.count.zero? && progress_notes.count.zero?
+    clients.count.zero? && changelogs.count.zero?
   end
 
   def client_status
@@ -142,6 +142,7 @@ class User < ActiveRecord::Base
     overdue   = []
     due_today = []
     clients.active_accepted_status.each do |client|
+      next if client.age_over_18?
       client_next_asseement_date = client.next_assessment_date.to_date
       if client_next_asseement_date < Date.today
         overdue << client
@@ -150,10 +151,6 @@ class User < ActiveRecord::Base
       end
     end
     { overdue_count: overdue.count, due_today_count: due_today.count }
-  end
-
-  def assessments_overdue
-    clients.active_accepted_status
   end
 
   def client_custom_field_frequency_overdue_or_due_today
@@ -180,8 +177,8 @@ class User < ActiveRecord::Base
     end
   end
 
-  def client_enrollment_tracking_overdue_or_due_today
-    client_enrollment_tracking_notification(clients.active_accepted_status)
+  def client_forms_overdue_or_due_today
+    overdue_and_due_today_forms(clients.active_accepted_status)
   end
 
   def case_note_overdue_and_due_today

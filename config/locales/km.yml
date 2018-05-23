@@ -296,6 +296,7 @@ km:
     fields:
       able: ឣតិថិជនក្នុងកម្មវិធី អែបល
       able_state: ស្ថានភាព អែបល
+      active_program_stream: កំពុងចូលរួមកម្មវិធីបន្ទាប់បន្សំ
       address: ឣាសយដ្ឋាន
       age: អាយុ
       agencies_involved: អង្គភាពដែលពាក់ព័ន្ធ
@@ -322,6 +323,7 @@ km:
       district: ស្រុក/ខណ្ឌ
       donor: ម្ចាស់ជំនួយ
       donor_id: ម្ចាស់ជំនួយ
+      enrolled_program_stream: ចូលរួមកម្មវិធីបន្ទាប់បន្សំរួចហើយ
       exit_circumstance: ស្ថានភាពនៃការចាកចេញ
       exit_ec_date: ថ្ងៃចាកចេញពី EC
       exit_fc_date: ថ្ងៃចាកចេញពី FC
@@ -359,7 +361,6 @@ km:
       placement_start_date: ថ្ងៃបញ្ជូនទៅក្នុងករណី
       plot: Plot
       postal_code: Postal Code
-      program_stream: កម្មវិធីបន្ទាប់បន្សំ
       province: ខេត្តកំណើត
       province_id: ខេត្តបច្ចុប្បន្ន
       rated_for_id_poor: តើអតិថិជនត្រូវបានវាយតម្លៃថាអត្តសញ្ញាណក្រីក្រឬទេ
@@ -1675,6 +1676,7 @@ km:
       interventions: ចំនុចដែលត្រូវធ្វើ
       locations: កន្លែង
       materials: របស់របរ/សំភារៈ
+      organisation_types: ប្រភេទឣង្គភាព
       partner_custom_fields: ទម្រង់បែបបទរបស់ដៃគូ
       partners: ដៃគូ
       program_streams: កម្មវិធីបន្ទាប់បន្សំ
@@ -2410,7 +2412,7 @@ km:
         last_name: នាមត្រកូល
         leave_blank_if_you_dont_want_to_change: រំលងប្រសិនបើឣ្នកមិនចង់ធ្វើការផ្លាស់ប្តូរ
         mobile: លេខទូរស័ព្ទ
-        overdue_task_summary_notify: ផ្ញើឱ្យខ្ញុំសេចក្ដីសង្ខេបនៃភារកិច្ចហួសកាលកំណត់
+        overdue_task_summary_notify: ការជូនដំណឹងតាមរយៈអ៊ីម៉ែល
         password: លេខកូដសំងាត់
         password_confirmation: បញ្ជាក់ពាក្យសម្ងាត់ថ្មី
         province: ខេត្ត
@@ -3124,6 +3126,9 @@ km:
       due_today_family_custom_field_count:
         one: មានទម្រង់បែបបទរបស់គ្រួសារចំនួន1ដែលត្រូវបំពេញនៅថ្ងៃនេះ
         other: មានទម្រង់បែបបទរបស់គ្រួសារចំនួន%{count}ដែលត្រូវបំពេញនៅថ្ងៃនេះ
+      due_today_forms_count:
+        one: មានទម្រង់បែបបទរបស់អតិថិជនចំនួន1ដែលត្រូវបំពេញនៅថ្ងៃនេះ
+        other: មានទម្រង់បែបបទរបស់អតិថិជនចំនួន%{count}ដែលត្រូវបំពេញនៅថ្ងៃនេះ
       due_today_partner_custom_field_count:
         one: មានទម្រង់បែបបទរបស់ដៃគូចំនួន1ដែលត្រូវបំពេញនៅថ្ងៃនេះ
         other: មានទម្រង់បែបបទរបស់ដៃគូចំនួន%{count}ដែលត្រូវបំពេញនៅថ្ងៃនេះ
@@ -3137,6 +3142,9 @@ km:
         one: ការតាមដានរបស់អ្នកប្រើចំនួន1ដែលត្រូវបំពេញនៅថ្ងៃនេះ
         other: ការតាមដានរបស់អ្នកប្រើចំនួន %{count} ដែលត្រូវបំពេញនៅថ្ងៃនេះ
       no_task: មិនមានពត៌មានដែលត្រូវបង្ហាញ
+      overdue_and_due_today_count:
+        one: ហើយនិងមានចំនួន1ដែលត្រូវបំពេញនៅថ្ងៃនេះ
+        other: ហើយនិងមានចំនួន%{count}ដែលត្រូវបំពេញនៅថ្ងៃនេះ
       overdue_assessments_count:
         one: អ្នកមានការប៉ាន់ប្រមាណចំនួន1មិនទាន់បានធ្វើ
         other: អ្នកមានការប៉ាន់ប្រមាណចំនួន%{count}មិនទាន់បានធ្វើ
@@ -3146,6 +3154,9 @@ km:
       overdue_family_custom_field_count:
         one: មានទម្រង់បែបបទរបស់គ្រួសារចំនួន1ដែលផុតកំណត់
         other: មានទម្រង់បែបបទរបស់គ្រួសារចំនួន%{count}ដែលផុតកំណត់
+      overdue_forms_count:
+        one: មានទម្រង់បែបបទរបស់អតិថិជនចំនួន1ដែលផុតកំណត់
+        other: មានទម្រង់បែបបទរបស់អតិថិជនចំនួន%{count}ដែលផុតកំណត់
       overdue_partner_custom_field_count:
         one: មានទម្រង់បែបបទរបស់ដៃគូចំនួន1ដែលផុតកំណត់
         other: មានទម្រង់បែបបទរបស់ដៃគូចំនួន%{count}ដែលផុតកំណត់
@@ -3188,6 +3199,7 @@ km:
       log_out: ចាកចេញ
       manage: គ្រប់គ្រង
       materials: របស់របរ/សំភារៈ
+      organisation_types: ប្រភេទឣង្គភាព
       partners: ដៃគូ
       program_streams: កម្មវិធីបន្ទាប់បន្សំ
       progress_note: កត់សំគាល់ការរីកចំរើន
@@ -3326,6 +3338,37 @@ km:
       most_recent_assessment: ការប៉ាន់ប្រមាណចុងក្រោយ
       upcoming_assessment: ការប៉ាន់ប្រមាណបន្ទាប់
   ok: យល់ព្រម
+  organization_types:
+    create:
+      failed_create: ប្រភេទឣង្គភាពមិនត្រូវបានបង្កើតដោយជោគជ័យ
+      successfully_created: ប្រភេទឣង្គភាពត្រូវបានបង្កើតដោយជោគជ័យ
+    destroy:
+      alert: ប្រភេទឣង្គភាពមិនអាចលុបបានទេ
+      failed_delete: ប្រភេទឣង្គភាពមិនត្រូវបានលុបចោលដោយជោគជ័យ
+      successfully_deleted: ប្រភេទឣង្គភាពត្រូវបានលុបចោលដោយជោគជ័យ
+    edit:
+      title: កែសម្រួលប្រភេទឣង្គភាព
+    form:
+      cancel: ទុកជាមោឃៈ
+      name: ឈ្មោះប្រភេទឣង្គភាព
+      province: ប្រភេទឣង្គភាព
+      save: រក្សាទុក
+    index:
+      add_new_organisation_type: បន្ថែមប្រភេទឣង្គភាពថ្មី
+      are_you_sure: តើអ្នកប្រាកដហើយថាចង់លុប?
+      changelogs: ប្រវត្តិនៃកំណែ
+      manage: សកម្មភាព
+      organisation_type_names: ឈ្មោះប្រភេទឣង្គភាព
+      organisation_types: ប្រភេទឣង្គភាព
+      view: មើល
+    new:
+      title: ប្រភេទឣង្គភាពថ្មី
+    update:
+      failed_update: ប្រភេទឣង្គភាពមិនត្រូវបានរក្សាទុក
+      successfully_updated: ប្រភេទឣង្គភាពរក្សាបានដោយជោគជ័យ
+    version:
+      back: ត្រលប់ក្រោយ
+      modification_of: ប្រវត្តិកំណែរបស់
   partners:
     actions:
       are_you_sure: តើអ្នកប្រាកដហើយថាចង់លុប?
@@ -3882,6 +3925,7 @@ km:
         material: របស់របរ/សំភារៈ
         no_modification: មិនមានប្រវត្តិកំណែ
         'on': របស់
+        organisation_type: ប្រភេទឣង្គភាព
         partner: ដៃគូ
         partner_custom_field: ទម្រង់បែបបទរបស់ដៃគូ
         progress_note: កំណត់សំគាល់ការរីកចំរើន
