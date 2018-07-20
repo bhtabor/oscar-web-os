@@ -98,8 +98,12 @@ RSpec.configure do |config|
     DatabaseCleaner.strategy = :truncation
     Apartment::Tenant.drop('demo') rescue nil
     Apartment::Tenant.drop('app') rescue nil
+    Apartment::Tenant.drop('shared') rescue nil
+    Apartment::Tenant.drop('mtp') rescue nil
+    Organization.create_and_build_tanent(full_name: 'Shared', short_name: 'shared')
     Organization.create_and_build_tanent(full_name: 'Demo', short_name: 'demo')
     Organization.create_and_build_tanent(full_name: 'Organization Testing', short_name: 'app')
+    Organization.create_and_build_tanent(full_name: 'MTP', short_name: 'mtp')
   end
 
   config.before(:each, js: true) do
@@ -108,6 +112,7 @@ RSpec.configure do |config|
     Capybara.default_max_wait_time = 10
     Capybara.always_include_port = true
     Apartment::Tenant.switch! 'app'
+    Setting.create(country_name: 'cambodia', max_case_note: 30, case_note_frequency: 'day', disable_assessment: false, max_assessment: 6)
     sub_domain = Organization.current.short_name
     Capybara.app_host = "http://#{sub_domain}.lvh.me"
   end
@@ -123,6 +128,7 @@ RSpec.configure do |config|
   config.before(:each) do
     DatabaseCleaner.start
     Apartment::Tenant.switch! 'app'
+    Setting.create(country_name: 'cambodia', max_case_note: 30, case_note_frequency: 'day', disable_assessment: false, max_assessment: 6)
   end
 
   config.after(:each) do

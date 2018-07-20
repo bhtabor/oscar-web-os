@@ -54,6 +54,13 @@ end
 
 # END OF FORM 1
 
-Setting.first_or_create(country_name: 'cambodia', assessment_frequency: 'month', min_assessment: 3, max_assessment: 6, case_note_frequency: 'day', max_case_note: 30)
+setting = Setting.first_or_create(country_name: 'cambodia', assessment_frequency: 'month', min_assessment: 3, max_assessment: 6, case_note_frequency: 'day', max_case_note: 30)
 
-User.create_with(first_name: 'OSCaR', last_name: 'Team', roles: 'admin', password: ENV['OSCAR_TEAM_PASSWORD']).find_or_create_by(email: ENV['OSCAR_TEAM_EMAIL'])
+setting.update(org_name: Organization.current.full_name) if setting.org_name.blank? && Organization.current.present?
+
+User.create_with(first_name: 'OSCaR', last_name: 'Team', roles: 'admin', referral_notification: true, password: ENV['OSCAR_TEAM_PASSWORD']).find_or_create_by(email: ENV['OSCAR_TEAM_EMAIL'])
+
+# OSCaR Referral Source
+Organization.oscar.pluck(:full_name).each do |ngo|
+  ReferralSource.find_or_create_by(name: "#{ngo} - OSCaR Referral")
+end

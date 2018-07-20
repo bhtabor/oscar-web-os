@@ -1,13 +1,14 @@
 module AdvancedSearches
   class ClientAdvancedSearch
     def initialize(basic_rules, clients, overdue_assessment = false)
-      @clients            = clients
-      @basic_rules        = basic_rules
-      @overdue_assessment = overdue_assessment
+      @clients                = clients
+      @basic_rules            = basic_rules
+      @overdue_assessment     = overdue_assessment
     end
 
     def filter
       query_array         = []
+
       client_base_sql     = AdvancedSearches::ClientBaseSqlBuilder.new(@clients, @basic_rules).generate
 
       query_array << client_base_sql[:sql_string]

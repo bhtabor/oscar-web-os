@@ -57,11 +57,15 @@ module FamiliesHelper
       id:                                       t('datagrid.columns.families.id'),
       code:                                     t('datagrid.columns.families.code'),
       family_type:                              t('datagrid.columns.families.family_type'),
+      status:                                   t('datagrid.columns.families.status'),
       case_history:                             t('datagrid.columns.families.case_history'),
       address:                                  t('datagrid.columns.families.address'),
       significant_family_member_count:          t('datagrid.columns.families.significant_family_member_count'),
       male_children_count:                      t('datagrid.columns.families.male_children_count'),
       province_id:                              t('datagrid.columns.families.province'),
+      district_id:                              t('datagrid.columns.families.district'),
+      commune:                                  t('datagrid.columns.families.commune'),
+      village:                                  t('datagrid.columns.families.village'),
       dependable_income:                        t('datagrid.columns.families.dependable_income'),
       male_adult_count:                         t('datagrid.columns.families.male_adult_count'),
       household_income:                         t('datagrid.columns.families.household_income'),
@@ -77,6 +81,10 @@ module FamiliesHelper
   def default_family_columns_visibility(column)
     label_column = {
       address_:                                  t('datagrid.columns.families.address'),
+      province_id_:                              t('datagrid.columns.families.province'),
+      district_id_:                              t('datagrid.columns.families.district'),
+      commune_:                                  t('datagrid.columns.families.commune'),
+      village_:                                  t('datagrid.columns.families.village'),
       caregiver_information_:                    t('datagrid.columns.families.caregiver_information'),
       case_history_:                             t('datagrid.columns.families.case_history'),
       clients_:                                  t('datagrid.columns.families.clients'),
@@ -86,6 +94,7 @@ module FamiliesHelper
       contract_date_:                            t('datagrid.columns.families.contract_date'),
       dependable_income_:                        t('datagrid.columns.families.dependable_income'),
       family_type_:                              t('datagrid.columns.families.family_type'),
+      status_:                                   t('datagrid.columns.families.status'),
       female_adult_count_:                       t('datagrid.columns.families.female_adult_count'),
       female_children_count_:                    t('datagrid.columns.families.female_children_count'),
       household_income_:                         t('datagrid.columns.families.household_income'),
@@ -95,9 +104,25 @@ module FamiliesHelper
       manage_:                                   t('datagrid.columns.families.manage'),
       member_count_:                             t('datagrid.columns.families.member_count'),
       name_:                                     t('datagrid.columns.families.name'),
-      province_id_:                              t('datagrid.columns.families.province'),
       significant_family_member_count_:          t('datagrid.columns.families.significant_family_member_count')
     }
     label_tag "#{column}_", label_column[column.to_sym]
+  end
+
+
+  def merged_address_family(object)
+    current_address = []
+    current_address << "#{I18n.t('datagrid.columns.families.village')} #{object.village}" if object.village.present?
+    current_address << "#{I18n.t('datagrid.columns.families.commune')} #{object.commune}" if object.commune.present?
+    if locale == :km
+      current_address << object.district_name.split(' / ').first if object.district.present?
+      current_address << object.province_name.split(' / ').first if object.province.present?
+      current_address << 'កម្ពុជា'
+    else
+      current_address << object.district_name.split(' / ').last if object.district.present?
+      current_address << object.province_name.split(' / ').last if object.province.present?
+      current_address << 'Cambodia'
+    end
+    current_address.join(', ')
   end
 end

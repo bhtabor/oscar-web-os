@@ -7,13 +7,13 @@ class ApplicationController < ActionController::Base
   before_action :configure_permitted_parameters, if: :devise_controller?
   before_action :find_association, if: :devise_controller?
   before_action :set_locale
-  before_action :set_paper_trail_whodunnit
+  before_action :set_paper_trail_whodunnit, :current_setting
 
   rescue_from ActiveRecord::RecordNotFound do |exception|
     render file: "#{Rails.root}/app/views/errors/404", layout: false, status: :not_found
   end
 
-  helper_method :current_organization
+  helper_method :current_organization, :current_setting
 
   rescue_from CanCan::AccessDenied do |exception|
     # redirect_to root_url, alert: exception.message
@@ -33,6 +33,10 @@ class ApplicationController < ActionController::Base
     Organization.current
   end
 
+  def current_setting
+    @current_setting = Setting.first
+  end
+
   private
 
   def configure_permitted_parameters
@@ -49,7 +53,8 @@ class ApplicationController < ActionController::Base
     devise_parameter_sanitizer.for(:account_update) << :pin_code
     devise_parameter_sanitizer.for(:account_update) << :program_warning
     devise_parameter_sanitizer.for(:account_update) << :domain_warning
-    devise_parameter_sanitizer.for(:account_update) << :staff_performance_notification
+    # devise_parameter_sanitizer.for(:account_update) << :staff_performance_notification
+    devise_parameter_sanitizer.for(:account_update) << :referral_notification
   end
 
   def find_association

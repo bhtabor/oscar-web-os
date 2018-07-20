@@ -34,12 +34,14 @@ describe Client, 'associations' do
   it { is_expected.to have_many(:problems).through(:client_problems) }
   it { is_expected.to have_many(:exit_ngos).dependent(:destroy) }
   it { is_expected.to have_many(:enter_ngos).dependent(:destroy) }
+  it { is_expected.to have_many(:referrals).dependent(:destroy) }
 end
 
 describe Client, 'callbacks' do
   before do
     ClientHistory.destroy_all
   end
+
   context 'set slug as alias' do
     let!(:client){ create(:client) }
     it { expect(client.slug).to eq("#{Organization.current.short_name}-#{client.id}") }
@@ -64,6 +66,16 @@ describe Client, 'callbacks' do
     end
   end
 
+  context 'before_create' do
+    let!(:setting){ create(:setting, country_name: 'cambodia') }
+    let!(:client_1){ create(:client) }
+    context '#set_country_origin' do
+      it 'base on Setting' do
+        expect(client_1.country_origin).to eq('cambodia')
+      end
+    end
+  end
+
   context 'before_update' do
     context 'if exiting_ngo?' do
       context 'disconnect_client_user_relation' do
@@ -82,6 +94,7 @@ end
 describe Client, 'methods' do
   let!(:setting){ create(:setting, :monthly_assessment) }
   let!(:case_worker) { create(:user, roles: 'case worker') }
+  let!(:family){ create(:family) }
   let!(:client){ create(:client, user_ids: [case_worker.id], local_given_name: 'Barry', local_family_name: 'Allen', date_of_birth: '2007-05-15', status: 'Active') }
   let!(:other_client) { create(:client, user_ids: [case_worker.id]) }
   let!(:able_client) { create(:client, able_state: Client::ABLE_STATES[0]) }
@@ -267,28 +280,28 @@ describe Client, 'methods' do
     end
 
     context 'with an inactive case and an active case' do
-      let!(:inactive_case) { create(:case, client: client, exited: true, start_date: 2.years.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
-      let!(:active_case) { create(:case, client: client, exited: false, start_date: 6.months.ago) }
+      let!(:inactive_case) { create(:case, family: family, client: client, exited: true, start_date: 2.years.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
+      let!(:active_case) { create(:case, family: family, client: client, exited: false, start_date: 6.months.ago) }
       it { expect(client.time_in_care).to eq(0.5) }
     end
 
     context 'with an inactive case and two active cases' do
-      let!(:inactive_case) { create(:case, client: client, exited: true, start_date: 2.years.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
-      let!(:active_case) { create(:case, client: client, exited: false, start_date: 1.year.ago) }
-      let!(:other_active_case) { create(:case, case_type: 'FC', client: client, exited: false, start_date: 6.months.ago) }
+      let!(:inactive_case) { create(:case, family: family, client: client, exited: true, start_date: 2.years.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
+      let!(:active_case) { create(:case, family: family, client: client, exited: false, start_date: 1.year.ago) }
+      let!(:other_active_case) { create(:case, family: family, case_type: 'FC', client: client, exited: false, start_date: 6.months.ago) }
       it { expect(client.time_in_care).to eq(1.0) }
     end
 
     context 'with some inactive cases and an active case' do
-      let!(:inactive_case) { create(:case, client: client, exited: true, start_date: 2.years.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
-      let!(:active_case) { create(:case, client: client, exited: false, start_date: 1.year.ago) }
-      let!(:other_active_case) { create(:case, case_type: 'FC', client: client, exited: true, start_date: 6.months.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
+      let!(:inactive_case) { create(:case, family: family, client: client, exited: true, start_date: 2.years.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
+      let!(:active_case) { create(:case, family: family, client: client, exited: false, start_date: 1.year.ago) }
+      let!(:other_active_case) { create(:case, family: family, case_type: 'FC', client: client, exited: true, start_date: 6.months.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
       it { expect(client.time_in_care).to eq(1.0) }
     end
 
     context 'without any active cases but some inactive cases' do
-      let!(:inactive_case) { create(:case, client: client, exited: true, start_date: 2.years.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
-      let!(:active_case) { create(:case, case_type: 'FC', client: client, exited: true, start_date: 6.months.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
+      let!(:inactive_case) { create(:case, family: family, client: client, exited: true, start_date: 2.years.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
+      let!(:active_case) { create(:case, family: family, case_type: 'FC', client: client, exited: true, start_date: 6.months.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
       it { expect(client.time_in_care).to eq(2.0) }
     end
   end
@@ -299,8 +312,8 @@ describe Client, 'methods' do
   end
 
   context 'inactive_day_care' do
-    let!(:inactive_case) { create(:case, client: client, exited: true, start_date: 2.years.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
-    let!(:active_case) { create(:case, case_type: 'FC', client: client, exited: true, start_date: 6.months.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
+    let!(:inactive_case) { create(:case, family: family, client: client, exited: true, start_date: 2.years.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
+    let!(:active_case) { create(:case, family: family, case_type: 'FC', client: client, exited: true, start_date: 6.months.ago, exit_date: Date.today, exit_note: FFaker::Lorem.paragraph) }
     it { expect(client.inactive_day_care).to be_between(730.0, 732) }
   end
 

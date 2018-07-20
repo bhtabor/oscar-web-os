@@ -13,10 +13,11 @@ module AdvancedSearches
       date_picker_fields    = date_type_list.map { |item| AdvancedSearches::FilterTypes.date_picker_options(item, format_header(item), group) }
       drop_list_fields      = drop_down_type_list.map { |item| AdvancedSearches::FilterTypes.drop_list_options(item.first, format_header(item.first), item.last, group) }
       domain_scores_options = AdvancedSearches::DomainScoreFields.render
+      school_grade_options  = AdvancedSearches::SchoolGradeFields.render
 
-      search_fields       = text_fields + drop_list_fields + number_fields + date_picker_fields
+      search_fields         = text_fields + drop_list_fields + number_fields + date_picker_fields
 
-      search_fields.sort_by { |f| f[:label].downcase } + domain_scores_options
+      search_fields.sort_by { |f| f[:label].downcase } + domain_scores_options + school_grade_options
     end
 
     private
@@ -26,7 +27,7 @@ module AdvancedSearches
     end
 
     def text_type_list
-      ['given_name', 'family_name', 'local_given_name', 'local_family_name', 'family', 'slug', 'referral_phone', 'school_name', 'school_grade', 'telephone_number', 'other_info_of_exit', 'exit_note', 'name_of_referee', 'main_school_contact', 'what3words', 'kid_id', 'code', *setting_country_fields[:text_fields]]
+      ['given_name', 'family_name', 'local_given_name', 'local_family_name', 'family', 'slug', 'referral_phone', 'school_name', 'telephone_number', 'other_info_of_exit', 'exit_note', 'name_of_referee', 'main_school_contact', 'what3words', 'kid_id', 'code', *setting_country_fields[:text_fields]]
     end
 
     def date_type_list
@@ -74,6 +75,15 @@ module AdvancedSearches
       Province.order(:name).map { |s| { s.id.to_s => s.name } }
     end
 
+    def birth_provinces
+      current_org = Organization.current.short_name
+      provinces = []
+      Organization.switch_to 'shared'
+      ['Cambodia', 'Thailand', 'Lesotho', 'Myanmar'].each{ |country| provinces << Province.country_is(country.downcase).map{|p| { value: p.id.to_s, label: p.name, optgroup: country } } }
+      Organization.switch_to current_org
+      provinces.flatten
+    end
+
     def districts
       District.order(:name).map { |s| { s.id.to_s => s.name } }
     end
@@ -112,7 +122,7 @@ module AdvancedSearches
       when 'cambodia'
         {
           text_fields: ['house_number', 'street_number', 'village', 'commune'],
-          drop_down_fields: [['province_id', provinces], ['district_id', districts], ['birth_province_id', provinces]]
+          drop_down_fields: [['province_id', provinces], ['district_id', districts], ['birth_province_id', birth_provinces]]
         }
       when 'lesotho'
         {
@@ -122,7 +132,7 @@ module AdvancedSearches
       when 'thailand'
         {
           text_fields: ['plot', 'road', 'postal_code'],
-          drop_down_fields: [['province_id', provinces], ['district_id', districts], ['subdistrict_id', subdistricts], ['birth_province_id', provinces]]
+          drop_down_fields: [['province_id', provinces], ['district_id', districts], ['subdistrict_id', subdistricts], ['birth_province_id', birth_provinces]]
         }
       when 'myanmar'
         {

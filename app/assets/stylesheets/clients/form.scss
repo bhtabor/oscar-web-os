@@ -42,7 +42,7 @@ body[id='clients-edit'], body[id='clients-update']{
     }
   }
 
-  .client_users label.disabled {
+  .disabled {
     color: #333 !important;
   }
   .input-group-addon.what3words{
@@ -56,5 +56,9 @@ body[id='clients-edit'], body[id='clients-update']{
   }
   .cancel-client-button{
     position: relative;
+  }
+
+  .consent-forms {
+    clear: both;
   }
 }

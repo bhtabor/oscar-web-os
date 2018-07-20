@@ -32,6 +32,28 @@ describe User, 'validations' do
 end
 
 describe User, 'callbacks' do
+  context 'before_save' do
+    let!(:manager_1){ create(:user, :manager) }
+    let!(:manager_2){ create(:user, :manager, manager_id: manager_1.id) }
+    let(:case_worker){ create(:user, manager_id: manager_2.id) }
+
+    context 'detach_manager' do
+      context 'reset manager_id to nil' do
+        it 'if roles_changed to admin' do
+          case_worker.update(roles: 'admin')
+          expect(case_worker.manager_id).to be_nil
+          expect(case_worker.manager_ids).to eq([])
+        end
+
+        it 'if roles_changed to strategic_overviewer' do
+          case_worker.update(roles: 'strategic overviewer')
+          expect(case_worker.manager_id).to be_nil
+          expect(case_worker.manager_ids).to eq([])
+        end
+      end
+    end
+  end
+
   context 'assign as admin' do
     let!(:user){ create(:user, roles: 'admin', first_name: 'Coca', last_name: 'Cola') }
     before do
@@ -135,6 +157,19 @@ describe User, 'callbacks' do
       expect(user.program_stream_permissions.first.program_stream_id).to eq(program_stream.id)
       expect(user.program_stream_permissions.first.readable).to eq(true)
       expect(user.program_stream_permissions.first.editable).to eq(true)
+    end
+  end
+
+  context 'toggle_referral_notification' do
+    let!(:admin) { create(:user, :admin) }
+    let!(:manager) { create(:user, :manager) }
+
+    it 'should update admin recive referral to true' do
+      expect(admin.referral_notification).to be_truthy
+    end
+
+    it 'should update manager recive referral to false' do
+      expect(manager.referral_notification).to be_falsey
     end
   end
 end
@@ -305,6 +340,16 @@ describe User, 'scopes' do
     end
     it 'should not include notify emails' do
       is_expected.not_to include(not_notify_email)
+    end
+  end
+
+  context 'referral_notification_email' do
+    subject{ User.referral_notification_email }
+    it 'should include referral notification user' do
+      is_expected.to include(user)
+    end
+    it 'should not include referral notification user' do
+      is_expected.not_to include(manager)
     end
   end
 end

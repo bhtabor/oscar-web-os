@@ -34,6 +34,10 @@ class ProgramStream < ActiveRecord::Base
   scope  :name_like,      ->(value)  { where(name: value) }
   scope  :by_name,        ->(value)  { where('name iLIKE ?', "%#{value}%") }
 
+  def name=(name)
+    write_attribute(:name, name.try(:strip))
+  end
+
   def build_permission
     User.all.each do |user|
       next if user.admin? || user.strategic_overviewer?
@@ -147,7 +151,7 @@ class ProgramStream < ActiveRecord::Base
   end
 
   def set_program_completed
-    return update_columns(completed: false) if (enrollment.empty? || exit_program.empty? || trackings.empty? || trackings.pluck(:name).include?('') || trackings.pluck(:fields).include?([])) && !tracking_required
+    return update_columns(completed: false) if enrollment.empty? || exit_program.empty? || (!tracking_required && trackings.empty? || trackings.pluck(:name).include?('') || trackings.pluck(:fields).include?([]))
     update_columns(completed: true)
   end
 

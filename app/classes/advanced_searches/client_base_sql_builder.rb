@@ -8,13 +8,14 @@ module AdvancedSearches
 
     BLANK_FIELDS = ['date_of_birth', 'initial_referral_date', 'follow_up_date', 'has_been_in_orphanage', 'has_been_in_government_care', 'province_id', 'referral_source_id', 'birth_province_id', 'received_by_id', 'followed_up_by_id', 'donor_id', 'district_id', 'subdistrict_id', 'township_id', 'state_id']
     SENSITIVITY_FIELDS = %w(given_name family_name local_given_name local_family_name kid_id code school_name school_grade street_number house_number village commune live_with relevant_referral_information telephone_number name_of_referee main_school_contact what3words)
+    SHARED_FIELDS = %w(given_name family_name local_given_name local_family_name gender birth_province_id date_of_birth live_with telephone_number)
 
-    def initialize(clients, rules)
+    def initialize(clients, basic_rules)
       @clients     = clients
       @values      = []
       @sql_string  = []
-      @condition    = rules['condition']
-      @basic_rules  = rules['rules'] || []
+      @condition   = basic_rules['condition']
+      @basic_rules = basic_rules['rules'] || []
 
       @columns_visibility = []
     end
@@ -29,7 +30,13 @@ module AdvancedSearches
           association_filter = AdvancedSearches::ClientAssociationFilter.new(@clients, field, operator, value).get_sql
           @sql_string << association_filter[:id]
           @values     << association_filter[:values]
-
+        elsif SHARED_FIELDS.include?(field)
+          short_name = Organization.current.short_name
+          Organization.switch_to 'shared'
+          shared_client_filter = AdvancedSearches::SharedFieldsSqlFilter.new(field, operator, value, SENSITIVITY_FIELDS, BLANK_FIELDS).get_sql
+          Organization.switch_to short_name
+          @sql_string << shared_client_filter[:id]
+          @values     << shared_client_filter[:values]
         elsif form_builder.first == 'formbuilder'
           custom_form = CustomField.find_by(form_title: form_builder.second, entity_type: 'Client')
           custom_field = AdvancedSearches::EntityCustomFormSqlBuilder.new(custom_form, rule, 'client').get_sql
@@ -152,9 +159,14 @@ module AdvancedSearches
         end
 
       when 'between'
-        @sql_string << "clients.#{field} BETWEEN ? AND ?"
-        @values << value.first
-        @values << value.last
+        if field == 'school_grade'
+          @sql_string << "clients.#{field} in (?)"
+          @values << [value.first, value.last]
+        else
+          @sql_string << "clients.#{field} BETWEEN ? AND ?"
+          @values << value.first
+          @values << value.last
+        end
       end
     end
 

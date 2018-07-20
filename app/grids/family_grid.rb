@@ -18,15 +18,19 @@ class FamilyGrid
     scope.family_id_like(value)
   end
 
-  filter(:family_type, :enum, select: [['Birth Family', 'birth_family'], %w(Emergency emergency), %w(Foster foster), %w(Inactive inactive), %w(Kinship kinship)], header: -> { I18n.t('datagrid.columns.families.family_type') }) do |value, scope|
+  filter(:family_type, :enum, select: Family::TYPES, header: -> { I18n.t('datagrid.columns.families.family_type') }) do |value, scope|
     scope.by_family_type(value)
+  end
+
+  filter(:status, :enum, select: Family::STATUSES, header: -> { I18n.t('datagrid.columns.families.status') }) do |value, scope|
+    scope.by_status(value)
   end
 
   filter(:case_history, :string, header: -> { I18n.t('datagrid.columns.families.case_history') }) do |value, scope|
     scope.case_history_like(value)
   end
 
-  filter(:address, :string, header: -> { I18n.t('datagrid.columns.families.address') }) { |value, scope| scope.address_like(value) }
+  # filter(:address, :string, header: -> { I18n.t('datagrid.columns.families.address') }) { |value, scope| scope.address_like(value) }
 
   filter(:significant_family_member_count, :integer, range: true, header: -> { I18n.t('datagrid.columns.families.significant_family_member_count') })
 
@@ -36,8 +40,22 @@ class FamilyGrid
 
   filter(:province_id, :enum, select: :province_options, header: -> { I18n.t('datagrid.columns.families.province') })
 
+  filter(:district_id, :enum, select: :district_options, header: -> { I18n.t('datagrid.columns.families.district') })
+
+  filter(:commune, :string, header: -> { I18n.t('datagrid.columns.families.commune') }) do |value, scope|
+    scope.commune_like(value)
+  end
+
+  filter(:village, :string, header: -> { I18n.t('datagrid.columns.families.village') }) do |value, scope|
+    scope.village_like(value)
+  end
+
   def province_options
     Family.province_are
+  end
+
+  def district_options
+    Family.joins(:district).pluck('districts.name', 'districts.id').uniq
   end
 
   filter(:dependable_income, :xboolean, header: -> { I18n.t('datagrid.columns.families.dependable_income') }) do |value, scope|
@@ -67,7 +85,11 @@ class FamilyGrid
   column(:name, html: false, header: -> { I18n.t('datagrid.columns.families.name') })
 
   column(:family_type, header: -> { I18n.t('datagrid.columns.families.family_type') }) do |object|
-    object.family_type.titleize
+    object.family_type
+  end
+
+  column(:status, header: -> { I18n.t('datagrid.columns.families.status') }) do |object|
+    object.status
   end
 
   column(:case_history, html: true, header: -> { I18n.t('datagrid.columns.families.case_history') }) do |object|
@@ -76,7 +98,7 @@ class FamilyGrid
 
   column(:case_history, html: false, header: -> { I18n.t('datagrid.columns.families.case_history') })
 
-  column(:address, header: -> { I18n.t('datagrid.columns.families.address') })
+  # column(:address, header: -> { I18n.t('datagrid.columns.families.address') })
 
   column(:member_count, html: true, header: -> { I18n.t('datagrid.columns.families.member_count') }, order: ('families.female_children_count, families.male_children_count, families.female_adult_count, families.male_adult_count')) do |object|
     render partial: 'families/members', locals: { object: object }
@@ -109,8 +131,20 @@ class FamilyGrid
   column(:male_adult_count, header: -> { I18n.t('datagrid.columns.families.male_adult_count') })
   column(:contract_date, header: -> { I18n.t('datagrid.columns.families.contract_date') })
 
+  column(:village, header: -> { I18n.t('datagrid.columns.families.village') }) do |object|
+    object.village
+  end
+
+  column(:commune, header: -> { I18n.t('datagrid.columns.families.commune') }) do |object|
+    object.commune
+  end
+
+  column(:district, order: 'districts.name', header: -> { I18n.t('datagrid.columns.families.district') }) do |object|
+    object.district_name
+  end
+
   column(:province, order: 'provinces.name', header: -> { I18n.t('datagrid.columns.families.province') }) do |object|
-    object.province.try(:name)
+    object.province_name
   end
 
   column(:cases, header: -> { I18n.t('datagrid.columns.families.clients') }, html: false) do |object|
