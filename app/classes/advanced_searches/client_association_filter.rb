@@ -10,8 +10,6 @@ module AdvancedSearches
     def get_sql
       sql_string = 'clients.id IN (?)'
       case @field
-      when 'form_title'
-        values = form_title_field_query
       when 'user_id'
         values = user_id_field_query
       when 'agency_name'
@@ -52,6 +50,8 @@ module AdvancedSearches
         values = referred_to_query
       when 'referred_from'
         values = referred_from_query
+      when 'time_in_care'
+        values = time_in_care_query
       end
       { id: sql_string, values: values }
     end
@@ -445,21 +445,6 @@ module AdvancedSearches
       end
     end
 
-    def form_title_field_query
-      clients = @clients.joins(:custom_fields)
-      case @operator
-      when 'equal'
-        clients = clients.where('custom_fields.id = ?', @value)
-      when 'not_equal'
-        clients = clients.where.not('custom_fields.id = ?', @value)
-      when 'is_empty'
-        clients = @clients.where.not(id: clients.ids)
-      when 'is_not_empty'
-        clients = @clients.where(id: clients.ids)
-      end
-      clients.uniq.ids
-    end
-
     def agency_name_field_query
       clients = @clients.joins(:agencies)
       case @operator
@@ -553,6 +538,42 @@ module AdvancedSearches
       when 'is_not_empty'
         @clients.where(id: clients.ids).ids
       end
+    end
+
+    def time_in_care_query
+      client_ids = []
+      clients = @clients.joins(:client_enrollments)
+      years_to_days = @value.kind_of?(Array) ? [@value.first * 365, @value.last * 365] : @value * 365 if @value.present?
+      case @operator
+      when 'equal'
+        clients.each { |client| client_ids << client.id if convert_time_in_care_to_days(client) == years_to_days }
+      when 'not_equal'
+        clients.each { |client| client_ids << client.id if convert_time_in_care_to_days(client) != years_to_days }
+      when 'less'
+        clients.each { |client| client_ids << client.id if convert_time_in_care_to_days(client) < years_to_days  }
+      when 'less_or_equal'
+        clients.each { |client| client_ids << client.id if convert_time_in_care_to_days(client) <= years_to_days  }
+      when 'greater'
+        clients.each { |client| client_ids << client.id if convert_time_in_care_to_days(client) > years_to_days  }
+      when 'greater_or_equal'
+        clients.each { |client| client_ids << client.id if convert_time_in_care_to_days(client) >= years_to_days  }
+      when 'between'
+        clients.each { |client| client_ids << client.id if convert_time_in_care_to_days(client).between?(years_to_days.first, years_to_days.last) }
+      when 'is_empty'
+        client_ids = @clients.where.not(id: clients.ids).ids
+      when 'is_not_empty'
+        client_ids = clients.ids
+      end
+      client_ids
+    end
+
+    def convert_time_in_care_to_days(client)
+      time_in_care = client.time_in_care
+      days = 0
+      days += time_in_care[:years] * 365 if time_in_care[:years] > 0
+      days += time_in_care[:months] * 30 if time_in_care[:months] > 0
+      days += time_in_care[:weeks] * 7 if time_in_care[:weeks] > 0
+      days
     end
 
     def age_field_query

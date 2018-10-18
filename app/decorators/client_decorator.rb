@@ -6,7 +6,7 @@ class ClientDecorator < Draper::Decorator
   end
 
   def date_of_birth_format
-    model.date_of_birth.strftime('%B %d, %Y') if model.date_of_birth
+    model.date_of_birth.strftime('%d %B %Y') if model.date_of_birth
   end
 
   def age
@@ -27,11 +27,17 @@ class ClientDecorator < Draper::Decorator
   end
 
   def time_in_care
-    h.t('.time_in_care_around', count: model.time_in_care) if model.time_in_care
+    if model.time_in_care.present?
+      time_in_care = model.time_in_care
+      years = h.t('.time_in_care_around.year', count: time_in_care[:years]) if time_in_care[:years] > 0
+      months = h.t('.time_in_care_around.month', count: time_in_care[:months]) if time_in_care[:months] > 0
+      weeks = h.t('.time_in_care_around.week', count: time_in_care[:weeks]) if time_in_care[:weeks] > 0
+      [years, months, weeks].join(' ')
+    end
   end
 
   def referral_date
-    model.initial_referral_date.strftime('%B %d, %Y') if model.initial_referral_date
+    model.initial_referral_date.strftime('%d %B %Y') if model.initial_referral_date
   end
 
   def referral_source

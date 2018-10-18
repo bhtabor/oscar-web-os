@@ -64,7 +64,6 @@ class ClientColumnsVisibility
       reason_for_family_separation_: :reason_for_family_separation,
       rejected_note_: :rejected_note,
       family_: :family,
-      form_title_: :form_title,
       code_: :code,
       age_: :age,
       slug_: :slug,
@@ -83,7 +82,8 @@ class ClientColumnsVisibility
       created_at_: :created_at,
       created_by_: :created_by,
       referred_to_: :referred_to,
-      referred_from_: :referred_from
+      referred_from_: :referred_from,
+      time_in_care_: :time_in_care
     }
   end
 
