@@ -127,7 +127,7 @@ describe Client, 'methods' do
         Client.notify_upcoming_csi_assessment
       end
       it 'does not send an email' do
-        expect(subject.map(&:subject).include?('Upcoming CSI Assessment')).to be_falsey
+        expect(ActionMailer::Base.deliveries.map(&:subject).include?('Upcoming CSI Assessment')).to be_falsey
       end
     end
 

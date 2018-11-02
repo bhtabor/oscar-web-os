@@ -1,4 +1,4 @@
-[ ![Codeship Status for rotati/oscar-web](https://app.codeship.com/projects/0c400840-e69a-0134-b09a-26edd27a570b/status?branch=master)](https://app.codeship.com/projects/206873)
+[ ![Codeship Status for rotati/oscar-web-os](https://app.codeship.com/projects/f6b80f60-6b75-0135-9771-7e9523f697c6/status?branch=master)](https://app.codeship.com/projects/242146)
 
 # OSCaR
 
@@ -6,8 +6,8 @@ Open Source Case-management and Record-keeping.
 
 ### Requirements
 
-* Postgres(>= 9.3)
-* Ruby(2.2.0)
+* Postgres(>= 9.4)
+* Ruby(2.3.3)
 * Rails(4.2.2)
 
 ### Getting Start
@@ -18,7 +18,7 @@ Given that you got all the requirements running on your local machine.
 Clone the project to your local machine:
 
 ```
-  git clone git@github.com:rotati/oscar-web.git
+  git clone git@github.com:rotati/oscar-web-os.git
 ```
 
 Navigate to the project directory and create `.env` in project root path, and copy all content in `.env.example` and replace all variable values to fit your local machine.
@@ -31,8 +31,11 @@ Then run:
   rake db:create
 
   rake db:migrate
+  
+  # Create your instance/organization, "ngo_subdomain" must be lowercase without underscore.
+  Organization.create_and_build_tanent(short_name: 'ngo_subdomain', full_name: 'NGO Name', logo: File.open(Rails.root.join('path_to_your_ngo_logo')))
 
-  rake db:seed  # to load some basic data
+  rake db:seed  # to load basic data
 ```
 
 Once the steps are done, start the server by running:
