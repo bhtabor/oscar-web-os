@@ -62,7 +62,7 @@ describe 'Client' do
   end
 
   feature 'Show' do
-    let!(:client){ create(:client, :accepted, current_address: '') }
+    let!(:client){ create(:client, :accepted, current_address: '', profile: UploadedFile.new(File.open(File.join(Rails.root, '/spec/supports/image-placeholder.png')))) }
     let!(:setting){ Setting.first }
     let!(:program_stream) { create(:program_stream) }
 
@@ -90,6 +90,11 @@ describe 'Client' do
       let!(:third_client_3_enrollment) { create(:client_enrollment, enrollment_date: '2019-06-01', program_stream: program_stream, client: client_3) }
       let!(:third_client_3_exit) { create(:leave_program, exit_date: '2019-07-01', program_stream: program_stream, client_enrollment: third_client_3_enrollment) }
 
+      scenario 'profile photo' do
+        visit client_path(client)
+        expect(page.find('#client_photo')['alt']).to match(/image-placeholder.png/)
+      end
+
       scenario 'once enrollment' do
         visit client_path(client)
         expect(page).to have_content('1 year 1 month')
@@ -110,6 +115,11 @@ describe 'Client' do
       scenario 'Cambodia' do
         expect(page).to have_css('.address', text: 'Cambodia')
       end
+    end
+
+    scenario 'alias id' do
+      expect(page).to have_content(client.slug)
+      # FTS instance expects to see client code instead of slug
     end
 
     scenario 'Created by .. on ..' do
@@ -279,12 +289,14 @@ describe 'Client' do
       fill_in 'client_name_of_referee', with: 'Thida'
       fill_in 'client_given_name', with: 'Kema'
       find(".client_gender select option[value='male']", visible: false).select_option
+      find('#client_profile', visible: false).set('spec/supports/image-placeholder.png')
 
       find('#steps-uid-0-t-3').click
       page.find('a[href="#finish"]', visible: false).click
 
       expect(page).to have_content('Kema')
       expect(page).to have_content('Thida')
+      expect(page.find('#client_photo')['alt']).to match(/image-placeholder.png/)
     end
 
     scenario 'invalid as missing case workers', js: true do
@@ -330,9 +342,11 @@ describe 'Client' do
 
     scenario 'valid', js: true do
       fill_in 'client_name_of_referee', with: 'Allen'
+      find('#client_profile', visible: false).set('spec/supports/image-placeholder.png')
       find('.save-edit-client').trigger('click')
       wait_for_ajax
       expect(page).to have_content('Allen')
+      expect(page.find('#client_photo')['alt']).to match(/image-placeholder.png/)
     end
 
     scenario 'invalid' do
@@ -342,7 +356,7 @@ describe 'Client' do
     end
 
     scenario 'locked user who has incomplete tasks' do
-      expect(page).to have_selector(:css, "option[locked='locked']", text: user.name, count: 1)
+      expect(page).to have_selector(:css, "option[locked='locked']", text: user.name, count: 1, visible: false)
     end
   end
 

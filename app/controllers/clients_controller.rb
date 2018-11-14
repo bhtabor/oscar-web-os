@@ -29,9 +29,8 @@ class ClientsController < AdminController
         f.html do
           next unless params['commit'] == I18n.t('datagrid.form.search').html_safe
           client_grid             = @client_grid.scope { |scope| scope.accessible_by(current_ability) }
-          @csi_statistics         = CsiStatistic.new(client_grid.assets).assessment_domain_score.to_json
-          @enrollments_statistics = ActiveEnrollmentStatistic.new(client_grid.assets).statistic_data.to_json
           @results                = client_grid.assets.size
+          $client_data            = client_grid.assets
           @clients                = client_grid.assets
           @client_grid.scope { |scope| scope.accessible_by(current_ability).page(params[:page]).per(20) }
         end
@@ -196,7 +195,7 @@ class ClientsController < AdminController
             :house_number, :street_number, :suburb, :description_house_landmark, :directions, :street_line1, :street_line2, :plot, :road, :postal_code, :district_id, :subdistrict_id,
             :has_been_in_orphanage, :has_been_in_government_care,
             :relevant_referral_information, :province_id,
-            :state_id, :township_id, :rejected_note, :live_with,
+            :state_id, :township_id, :rejected_note, :live_with, :profile, :remove_profile,
             :gov_city, :gov_commune, :gov_district, :gov_date, :gov_village_code, :gov_client_code,
             :gov_interview_village, :gov_interview_commune, :gov_interview_district, :gov_interview_city,
             :gov_caseworker_name, :gov_caseworker_phone, :gov_carer_name, :gov_carer_relationship, :gov_carer_home,
