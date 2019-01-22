@@ -1,4 +1,18 @@
 module ProgramStreamHelper
+
+  def format_rule(rules)
+    if rules['rules'].any?
+      rules['rules'].each do |rule|
+        next if rule['id'].nil?
+        if rule['id'].include?('domainscore')
+          rule['id']    = rule['id'].gsub(/_/, '__')
+          rule['field'] = rule['field'].gsub(/_/, '__')
+        end
+      end
+    end
+    rules
+  end
+
   def html_column(full_width)
     full_width ? '' : 'col-md-6'
   end
