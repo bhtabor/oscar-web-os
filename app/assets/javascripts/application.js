@@ -9,6 +9,9 @@
 //= require jquery.nicescroll.min
 //= require dataTables/jquery.dataTables
 //= require dataTables/bootstrap/3/jquery.dataTables.bootstrap
+//= require dataTables/buttons.html5.min
+//= require dataTables/dataTables.buttons.min
+//= require dataTables/jszip.min
 //= require thredded
 //= require select2
 
@@ -94,7 +97,6 @@
 //= require notifications/index
 //= require sessions/new
 //= require case/quarterly_reports/index
-//= require client_advanced_searches/index
 //= require program_streams/form
 //= require custom_field_properties/form
 //= require program_streams/index
