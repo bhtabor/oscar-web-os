@@ -16,13 +16,15 @@ module ClientGridOptions
   end
 
   def export_client_reports
-    domain_score_report
+    default_all_csi_assessments
+    custom_all_csi_assessments
     form_builder_report if params[:client_advanced_search].present?
     csi_domain_score_report
     program_stream_report
     program_enrollment_date_report
     program_exit_date_report
-    date_of_assessments
+    default_date_of_assessments
+    custom_date_of_assessments
     case_note_date_report
     case_note_type_report
     accepted_date_report
@@ -184,39 +186,82 @@ module ClientGridOptions
     end
   end
 
-  def date_of_assessments
+  def default_date_of_assessments
     return unless @client_columns.visible_columns[:date_of_assessments_].present?
+    date_of_assessments('default')
+  end
+
+  def custom_date_of_assessments
+    return unless @client_columns.visible_columns[:date_of_custom_assessments_].present?
+    date_of_assessments('custom')
+  end
+
+  def date_of_assessments(type)
+    case type
+    when 'default'
+      records = 'client.assessments.defaults'
+      column = 'date_of_assessments'
+    when 'custom'
+      records = 'client.assessments.customs'
+      column = 'date_of_custom_assessments'
+    end
+
     if params[:data].presence == 'recent'
-      @client_grid.column(:date_of_assessments, header: I18n.t('datagrid.columns.clients.date_of_assessments')) do |client|
-        date_format(client.assessments.latest_record.try(:created_at)) if client.assessments.any?
+      @client_grid.column(column.to_sym, header: I18n.t("datagrid.columns.clients.#{column}")) do |client|
+        date_format(eval(records).latest_record.try(:created_at)) if records.any?
       end
     else
-      @client_grid.column(:date_of_assessments, header: I18n.t('datagrid.columns.clients.date_of_assessments')) do |client|
-        date_filter(client.assessments.most_recents, 'date_of_assessments').map{ |a| date_format(a.created_at) }.join(' | ') if client.assessments.any?
+      @client_grid.column(column.to_sym, header: I18n.t("datagrid.columns.clients.#{column}")) do |client|
+        date_filter(eval(records).most_recents, "#{column}").map{ |a| date_format(a.created_at) }.join(' | ') if eval(records).any?
       end
     end
   end
 
-  def domain_score_report
+  def default_all_csi_assessments
     return unless params['type'] == 'basic_info' && @client_columns.visible_columns[:all_csi_assessments_].present?
+    domain_score_report('default')
+  end
+
+  def custom_all_csi_assessments
+    return unless params['type'] == 'basic_info' && @client_columns.visible_columns[:all_custom_csi_assessments_].present?
+    domain_score_report('custom')
+  end
+
+  def domain_score_report(type)
+    case type
+    when 'default'
+      records = 'client.assessments.defaults'
+      column = 'all_csi_assessments'
+    when 'custom'
+      records = 'client.assessments.customs'
+      column = 'all_custom_csi_assessments'
+    end
+
     if params[:data].presence == 'recent'
-      @client_grid.column(:all_csi_assessments, header: t('.all_csi_assessments')) do |client|
-        recent_assessment = client.assessments.latest_record
+      @client_grid.column(column.to_sym, header: t(".#{column}")) do |client|
+        recent_assessment = eval(records).latest_record
         "#{date_format(recent_assessment.created_at)} => #{recent_assessment.assessment_domains_score}" if recent_assessment.present?
       end
     else
-      @client_grid.column(:all_csi_assessments, header: t('.all_csi_assessments')) do |client|
-        client.assessments.map(&:basic_info).join("\x0D\x0A")
+      @client_grid.column(column.to_sym, header: t(".#{column}")) do |client|
+        eval(records).map(&:basic_info).join("\x0D\x0A")
       end
     end
-    @client_grid.column_names << :all_csi_assessments if @client_grid.column_names.any?
+    @client_grid.column_names << column.to_sym if @client_grid.column_names.any?
   end
 
   def csi_domain_score_report
     Domain.order_by_identity.each do |domain|
       identity = domain.identity
-      @client_grid.column(domain.convert_identity.to_sym, class: 'domain-scores', header: identity) do |client|
-        assessment = client.assessments.latest_record
+      if domain.custom_domain
+        column = "custom_#{domain.convert_identity}".to_sym
+        records = 'client.assessments.customs'
+      else
+        column = domain.convert_identity.to_sym
+        records = 'client.assessments.defaults'
+      end
+      @client_grid.column(column, class: 'domain-scores', header: identity) do |client|
+        assessment = eval(records).latest_record
         assessment.assessment_domains.find_by(domain_id: domain.id).try(:score) if assessment.present?
       end
     end
@@ -225,7 +270,7 @@ module ClientGridOptions
   def form_builder_report
     data = params[:data].presence
     column_form_builder.each do |field|
-      fields = field[:id].gsub('&qoute;', '"').split('_')
+      fields = field[:id].gsub('&qoute;', '"').split('__')
       @client_grid.column(field[:id].to_sym, header: form_builder_format_header(fields)) do |client|
         format_field_value = fields.last.gsub("'", "''").gsub('&qoute;', '"').gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;')
         if fields.first == 'formbuilder'
@@ -248,7 +293,7 @@ module ClientGridOptions
           if data == 'recent'
             properties = date_format(client.client_enrollments.joins(:program_stream).where(program_streams: { name: fields.second }).order(enrollment_date: :desc).first.try(:enrollment_date))
           else
-            properties = date_filter(client.client_enrollments.joins(:program_stream).where(program_streams: { name: fields.second }), fields.join('_')).map{|date| date_format(date.enrollment_date) }.join(' | ')
+            properties = date_filter(client.client_enrollments.joins(:program_stream).where(program_streams: { name: fields.second }), fields.join('__')).map{|date| date_format(date.enrollment_date) }.join(' | ')
           end
         elsif fields.first == 'enrollment'
           if data == 'recent'
@@ -272,7 +317,7 @@ module ClientGridOptions
           if data == 'recent'
             properties = date_format(LeaveProgram.joins(:program_stream).where(program_streams: { name: fields.second }, leave_programs: { client_enrollment_id: ids }).order(exit_date: :desc).first.try(:exit_date))
           else
-            properties = date_filter(LeaveProgram.joins(:program_stream).where(program_streams: { name: fields.second }, leave_programs: { client_enrollment_id: ids }), fields.join('_')).map{|date| date_format(date.exit_date) }.join(' | ')
+            properties = date_filter(LeaveProgram.joins(:program_stream).where(program_streams: { name: fields.second }, leave_programs: { client_enrollment_id: ids }), fields.join('__')).map{|date| date_format(date.exit_date) }.join(' | ')
           end
         elsif fields.first == 'exitprogram'
           ids = client.client_enrollments.inactive.ids
@@ -310,8 +355,18 @@ module ClientGridOptions
 
   def column_form_builder
     forms = []
-    forms << @custom_form_fields if @custom_form_fields.present?
-    forms << @program_stream_fields if @program_stream_fields.present?
+    if @custom_form_fields.present?
+      forms << @custom_form_fields
+    elsif @wizard_custom_form_fields.present?
+      forms << @wizard_custom_form_fields
+    end
+
+    if @program_stream_fields.present?
+      forms << @program_stream_fields
+    elsif @wizard_program_stream_fields.present?
+      forms << @wizard_program_stream_fields
+    end
+
     forms.flatten
   end
 

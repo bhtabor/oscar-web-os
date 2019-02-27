@@ -156,6 +156,10 @@ CIF.Program_streamsNew = CIF.Program_streamsEdit = CIF.Program_streamsCreate = C
 
   _handleSaveProgramStream = ->
     $('#btn-save-draft').on 'click', ->
+      labelFields = $('[name="label"].fld-label')
+      for labelField in labelFields
+        labelField.textContent = labelField.textContent.replace(/;/g, '')
+
       if $('#trackings').is(':visible')
         _checkDuplicateTrackingName()
       if _preventProgramStreamWithoutTracking()
@@ -168,7 +172,11 @@ CIF.Program_streamsNew = CIF.Program_streamsEdit = CIF.Program_streamsCreate = C
       _handleAddRuleBuilderToInput()
       _handleSetValueToField()
       $('.tracking-builder').find('input, textarea').removeAttr('required')
+      $('#btn-save-draft').css('pointer-events', 'none')
+      btnSaving = $('.program-steps').data('saving')
+      $('#btn-save-draft').attr('disabled', 'disabled').text(btnSaving)
       $('#program-stream').submit()
+
 
   _handleSetRules = ->
     rules = $('#program_stream_rules').val()
@@ -331,7 +339,10 @@ CIF.Program_streamsNew = CIF.Program_streamsEdit = CIF.Program_streamsCreate = C
         if $('#rule-tab').is(':visible')
           _handleRemoveProgramList()
         else if $('#exit-program').is(':visible') then $(buttonSave).hide() else $(buttonSave).show()
-
+      onFinishing: () ->
+        labelFields = $('[name="label"].fld-label')
+        for labelField in labelFields
+          labelField.textContent = labelField.textContent.replace(/;/g, '')
       onFinished: (event, currentIndex) ->
         return false unless _handleCheckingDuplicateFields()
         _handleAddRuleBuilderToInput()
@@ -339,6 +350,10 @@ CIF.Program_streamsNew = CIF.Program_streamsEdit = CIF.Program_streamsCreate = C
         if _preventProgramStreamWithoutTracking()
           messageWarning = $('#trackings').data('complete-tracking')
           return alert(messageWarning)
+
+        $('a[href="#finish"]').css('pointer-events', 'none')
+        btnSaving = $('.program-steps').data('saving')
+        $('a[href="#finish"]').addClass('btn btn-xs disabled').css('font-size', '95%').text(btnSaving)
         form.submit()
 
       labels:
@@ -386,7 +401,7 @@ CIF.Program_streamsNew = CIF.Program_streamsEdit = CIF.Program_streamsCreate = C
     _preventRemoveField(TRACKING_URL, '') if $('#program_stream_id').val() != ''
 
   _initButtonSave = ->
-    form = $('form#program-stream')
+    form               = $('form#program-stream')
     btnSaveTranslation = filterTranslation.save
     form.find("[aria-label=Pagination]").append("<li><span id='btn-save-draft' class='btn btn-primary btn-sm'>#{btnSaveTranslation}</span></li>")
 
@@ -569,7 +584,7 @@ CIF.Program_streamsNew = CIF.Program_streamsEdit = CIF.Program_streamsCreate = C
   _disableOptions = (element) ->
     self = @
     rule = $(element).parent().siblings('.rule-filter-container').find('option:selected').val()
-    if rule.split('_')[0] == 'domainscore'
+    if rule.split('__')[0] == 'domainscore'
       ruleValueContainer = $(element).parent().siblings('.rule-value-container')
       if $(element).find('option:selected').val() == 'greater'
         $(ruleValueContainer).find("option[value=4]").attr('disabled', 'disabled')

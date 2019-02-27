@@ -4,9 +4,9 @@ module AdvancedSearches
     def initialize(program_stream_id, rule)
       @program_stream_id = program_stream_id
       field          = rule['field']
-      @field         = field.split('_').last.gsub("'", "''").gsub('&qoute;', '"').gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;')
+      @field         = field.split('__').last.gsub("'", "''").gsub('&qoute;', '"').gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;')
       @operator      = rule['operator']
-      @value         = rule['value']
+      @value         = format_value(rule['value'])
       @input_type    = rule['input']
     end
 
@@ -46,10 +46,15 @@ module AdvancedSearches
         properties_result = leave_programs.where("leave_programs.properties ->> '#{@field}' NOT ILIKE '%#{@value}%' ")
       when 'is_empty'
         if @type == 'checkbox'
-          properties_result = leave_programs.where("leave_programs.properties -> '#{@field}' ? ''")
+          properties_result = leave_programs.where.not("leave_programs.properties -> '#{@field}' ? ''")
+          client_ids        = properties_result.pluck('client_enrollments.client_id').uniq
         else
-          properties_result = leave_programs.where("leave_programs.properties -> '#{@field}' ? '' OR (leave_programs.properties -> '#{@field}') IS NULL")
+          properties_result = leave_programs.where.not("leave_programs.properties -> '#{@field}' ? '' OR (leave_programs.properties -> '#{@field}') IS NULL")
+          client_ids        = properties_result.pluck('client_enrollments.client_id').uniq
         end
+
+        client_ids = Client.where.not(id: client_ids).ids
+        return {id: sql_string, values: client_ids}
       when 'is_not_empty'
         if @type == 'checkbox'
           properties_result = leave_programs.where.not("leave_programs.properties -> '#{@field}' ? ''")
@@ -59,6 +64,7 @@ module AdvancedSearches
       when 'between'
         properties_result = leave_programs.where("(leave_programs.properties ->> '#{@field}')#{ '::numeric' if integer? } BETWEEN '#{@value.first}' AND '#{@value.last}' AND leave_programs.properties ->> '#{@field}' != ''")
       end
+
       client_ids = properties_result.pluck('client_enrollments.client_id').uniq
       {id: sql_string, values: client_ids}
     end

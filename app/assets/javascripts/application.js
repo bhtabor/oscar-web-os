@@ -9,6 +9,9 @@
 //= require jquery.nicescroll.min
 //= require dataTables/jquery.dataTables
 //= require dataTables/bootstrap/3/jquery.dataTables.bootstrap
+//= require dataTables/buttons.html5.min
+//= require dataTables/dataTables.buttons.min
+//= require dataTables/jszip.min
 //= require thredded
 //= require select2
 
@@ -26,6 +29,9 @@
 //= require form_builder/form-render.min
 //= require lodash/lodash.min.js
 //= require query_builder/query-builder.standalone.min.js
+// = require query_builder/utils
+// = require query_builder/model
+// = require query_builder/plugin
 //= require interact.js
 
 //= require tinymce
@@ -61,11 +67,13 @@
 //= require table_scroll
 //= require filters
 //= require assessments/form
+//= require assessments/show
 //= require tasks/form
 //= require tasks/index
 //= require dashboards/index
 //= require districts/index
 //= require case_notes/form
+//= require case_notes/index
 //= require cases/form
 //= require calendars/index
 //= require clients/index
@@ -83,6 +91,7 @@
 //= require data_trackers/index
 //= require changelogs/index
 //= require domains/form
+//= require domains/index
 //= require custom_fields/form
 //= require custom_fields/index
 //= require custom_fields/show
@@ -91,7 +100,6 @@
 //= require notifications/index
 //= require sessions/new
 //= require case/quarterly_reports/index
-//= require client_advanced_searches/index
 //= require program_streams/form
 //= require custom_field_properties/form
 //= require program_streams/index
@@ -101,7 +109,9 @@
 //= require client_enrollment_trackings/form
 //= require organizations/index
 //= require settings/index
+//= require settings/research_module
 //= require prevent_required_file_uploader
 //= require format_special_characters
 //= require referrals/form
 //= require government_forms/form
+//= require multiple_form/form

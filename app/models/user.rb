@@ -6,6 +6,7 @@ class User < ActiveRecord::Base
 
   ROLES = ['admin', 'manager', 'case worker', 'strategic overviewer'].freeze
   MANAGERS = ROLES.select { |role| role if role.include?('manager') }
+  GENDER_OPTIONS = [['Male', 'male'], ['Female', 'female'], ['Other', 'other'], ['Prefer not to say', 'prefer not to say']]
 
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :trackable, :validatable
@@ -51,6 +52,7 @@ class User < ActiveRecord::Base
 
   validates :roles, presence: true, inclusion: { in: ROLES }
   validates :email, presence: true, uniqueness: { case_sensitive: false }
+  validates :gender, presence: true
 
   scope :first_name_like, ->(value) { where('first_name iLIKE ?', "%#{value.squish}%") }
   scope :last_name_like,  ->(value) { where('last_name iLIKE ?', "%#{value.squish}%") }
@@ -145,18 +147,43 @@ class User < ActiveRecord::Base
   end
 
   def assessment_either_overdue_or_due_today
+    setting = Setting.first
     overdue   = []
     due_today = []
+    customized_overdue   = []
+    customized_due_today = []
     clients.active_accepted_status.each do |client|
-      next if client.uneligible_age?
-      client_next_asseement_date = client.next_assessment_date.to_date
-      if client_next_asseement_date < Date.today
-        overdue << client
-      elsif client_next_asseement_date == Date.today
-        due_today << client
+      next if !client.eligible_default_csi? && !client.eligible_custom_csi?
+      if setting.enable_default_assessment? && setting.enable_custom_assessment?
+        client_next_asseement_date = client.next_assessment_date.to_date
+        client_custom_next_assessment_date = client.custom_next_assessment_date.to_date
+        if client_next_asseement_date < Date.today
+          overdue << client
+        elsif client_next_asseement_date == Date.today
+          due_today << client
+        end
+        if client_custom_next_assessment_date < Date.today
+          customized_overdue << client
+        elsif client_custom_next_assessment_date == Date.today
+          customized_due_today << client
+        end
+      elsif setting.enable_default_assessment?
+        client_next_asseement_date = client.next_assessment_date.to_date
+        if client_next_asseement_date < Date.today
+          overdue << client
+        elsif client_next_asseement_date == Date.today
+          due_today << client
+        end
+      elsif setting.enable_custom_assessment?
+        client_custom_next_assessment_date = client.custom_next_assessment_date.to_date
+        if client_custom_next_assessment_date < Date.today
+          customized_overdue << client
+        elsif client_custom_next_assessment_date == Date.today
+          customized_due_today << client
+        end
       end
     end
-    { overdue_count: overdue.count, due_today_count: due_today.count }
+    { overdue_count: overdue.count, due_today_count: due_today.count, custom_overdue_count: customized_overdue.count, custom_due_today_count: customized_due_today.count }
   end
 
   def client_custom_field_frequency_overdue_or_due_today

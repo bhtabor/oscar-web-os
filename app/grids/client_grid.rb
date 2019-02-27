@@ -1,6 +1,7 @@
 class ClientGrid < BaseGrid
   extend ActionView::Helpers::TextHelper
   include ClientsHelper
+  include ApplicationHelper
 
   attr_accessor :current_user, :qType, :dynamic_columns, :param_data
   COUNTRY_LANG = { "cambodia" => "(Khmer)", "thailand" => "(Thai)", "myanmar" => "(Burmese)", "lesotho" => "(Sesotho)", "uganda" => "(Swahili)" }
@@ -25,7 +26,7 @@ class ClientGrid < BaseGrid
     filter_shared_fileds('local_family_name', value, scope)
   end
 
-  filter(:gender, :enum, select: %w(Male Female Unknown), header: -> { I18n.t('datagrid.columns.clients.gender') }) do |value, scope|
+  filter(:gender, :enum, select: Client::GENDER_OPTIONS, header: -> { I18n.t('datagrid.columns.clients.gender') }) do |value, scope|
     current_org = Organization.current
     Organization.switch_to 'shared'
     slugs = SharedClient.where(gender: value.downcase).pluck(:slug)
@@ -220,15 +221,28 @@ class ClientGrid < BaseGrid
 
   filter(:assessments_due_to, :enum, select: Assessment::DUE_STATES, header: -> { I18n.t('datagrid.columns.clients.assessments_due_to') }) do |value, scope|
     ids = []
+    setting = Setting.first
     if value == Assessment::DUE_STATES[0]
       Client.active_accepted_status.each do |c|
-        next if c.uneligible_age?
-        ids << c.id if c.next_assessment_date == Date.today
+        next if !c.eligible_default_csi? && !c.eligible_custom_csi?
+        if setting.enable_default_assessment? && setting.enable_custom_assessment?
+          ids << c.id if c.next_assessment_date == Date.today || c.custom_next_assessment_date == Date.today
+        elsif setting.enable_default_assessment?
+          ids << c.id if c.next_assessment_date == Date.today
+        elsif setting.enable_custom_assessment?
+          ids << c.id if c.custom_next_assessment_date == Date.today
+        end
       end
     else
       Client.joins(:assessments).active_accepted_status.each do |c|
-        next if c.uneligible_age?
-        ids << c.id if c.next_assessment_date < Date.today
+        next if !c.eligible_default_csi? && !c.eligible_custom_csi?
+        if setting.enable_default_assessment? && setting.enable_custom_assessment?
+          ids << c.id if c.next_assessment_date  < Date.today || c.custom_next_assessment_date  < Date.today
+        elsif setting.enable_default_assessment?
+          ids << c.id if c.next_assessment_date  < Date.today
+        elsif setting.enable_custom_assessment?
+          ids << c.id if c.custom_next_assessment_date  < Date.today
+        end
       end
     end
     scope.where(id: ids)
@@ -445,7 +459,7 @@ class ClientGrid < BaseGrid
   column(:gender, header: -> { I18n.t('datagrid.columns.clients.gender') }) do |object|
     current_org = Organization.current
     Organization.switch_to 'shared'
-    gender = SharedClient.find_by(slug: object.slug).gender.try(:titleize)
+    gender = SharedClient.find_by(slug: object.slug).gender.try(:capitalize)
     Organization.switch_to current_org.short_name
     gender
   end
@@ -723,7 +737,11 @@ class ClientGrid < BaseGrid
   end
 
   column(:date_of_assessments, header: -> { I18n.t('datagrid.columns.clients.date_of_assessments') }, html: true) do |object|
-    render partial: 'clients/assessments', locals: { object: object }
+    render partial: 'clients/assessments', locals: { object: object.assessments.defaults }
+  end
+
+  column(:date_of_custom_assessments, header: -> { I18n.t('datagrid.columns.clients.date_of_custom_assessments') }, html: true) do |object|
+    render partial: 'clients/assessments', locals: { object: object.assessments.customs }
   end
 
   # column(:date_of_assessments, header: -> { I18n.t('datagrid.columns.clients.date_of_assessments')}, html: false) do |object|
@@ -741,15 +759,29 @@ class ClientGrid < BaseGrid
   end
 
   dynamic do
-    if enable_assessment_setting?
+    if enable_default_assessment?
       column(:all_csi_assessments, header: -> { I18n.t('datagrid.columns.clients.all_csi_assessments') }, html: true) do |object|
-        render partial: 'clients/all_csi_assessments', locals: { object: object }
+        render partial: 'clients/all_csi_assessments', locals: { object: object.assessments.defaults }
       end
 
-      Domain.order_by_identity.each do |domain|
+      Domain.csi_domains.order_by_identity.each do |domain|
         identity = domain.identity
         column(domain.convert_identity.to_sym, class: 'domain-scores', header: identity, html: true) do |client|
-          assessment = client.assessments.latest_record
+          assessment = client.assessments.defaults.latest_record
+          assessment.assessment_domains.find_by(domain_id: domain.id).try(:score) if assessment.present?
+        end
+      end
+    end
+
+    if enable_custom_assessment?
+      column(:all_custom_csi_assessments, header: -> { I18n.t('datagrid.columns.clients.all_custom_csi_assessments') }, html: true) do |object|
+        render partial: 'clients/all_csi_assessments', locals: { object: object.assessments.customs }
+      end
+
+      Domain.custom_csi_domains.order_by_identity.each do |domain|
+        identity = domain.identity
+        column("custom_#{domain.convert_identity}".to_sym, class: 'domain-scores', header: identity, html: true) do |client|
+          assessment = client.assessments.customs.latest_record
           assessment.assessment_domains.find_by(domain_id: domain.id).try(:score) if assessment.present?
         end
       end
@@ -760,7 +792,7 @@ class ClientGrid < BaseGrid
     next unless dynamic_columns.present?
     data = param_data.presence
     dynamic_columns.each do |column_builder|
-      fields = column_builder[:id].gsub('&qoute;', '"').split('_')
+      fields = column_builder[:id].gsub('&qoute;', '"').split('__')
       column(column_builder[:id].to_sym, class: 'form-builder', header: -> { form_builder_format_header(fields) }, html: true) do |object|
         format_field_value = fields.last.gsub("'", "''").gsub('&qoute;', '"').gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;')
         if fields.first == 'formbuilder'
@@ -782,7 +814,7 @@ class ClientGrid < BaseGrid
           if data == 'recent'
             properties = date_format(object.client_enrollments.joins(:program_stream).where(program_streams: { name: fields.second }).order(enrollment_date: :desc).first.try(:enrollment_date))
           else
-            properties = date_filter(object.client_enrollments.joins(:program_stream).where(program_streams: { name: fields.second }), fields.join('_')).map{|date| date_format(date.enrollment_date) }
+            properties = date_filter(object.client_enrollments.joins(:program_stream).where(program_streams: { name: fields.second }), fields.join('__')).map{|date| date_format(date.enrollment_date) }
           end
         elsif fields.first == 'enrollment'
           if data == 'recent'
@@ -804,7 +836,7 @@ class ClientGrid < BaseGrid
           if data == 'recent'
             properties = date_format(LeaveProgram.joins(:program_stream).where(program_streams: { name: fields.second }, leave_programs: { client_enrollment_id: ids }).order(exit_date: :desc).first.try(:exit_date))
           else
-            properties = date_filter(LeaveProgram.joins(:program_stream).where(program_streams: { name: fields.second }, leave_programs: { client_enrollment_id: ids }), fields.join('_')).map{|date| date_format(date.exit_date) }
+            properties = date_filter(LeaveProgram.joins(:program_stream).where(program_streams: { name: fields.second }, leave_programs: { client_enrollment_id: ids }), fields.join('__')).map{|date| date_format(date.exit_date) }
           end
         elsif fields.first == 'exitprogram'
           ids = object.client_enrollments.inactive.ids
@@ -816,7 +848,7 @@ class ClientGrid < BaseGrid
           end
         end
         if fields.first == 'enrollmentdate' || fields.first == 'programexitdate'
-          render partial: 'clients/form_builder_dynamic/list_date_program_stream', locals: { properties:  properties, klass: fields.join('_').split(' ').first }
+          render partial: 'clients/form_builder_dynamic/list_date_program_stream', locals: { properties:  properties, klass: fields.join('__').split(' ').first }
         else
           properties = properties.present? ? properties : []
           render partial: 'clients/form_builder_dynamic/properties_value', locals: { properties: properties.is_a?(Array) && properties.flatten.all?{|value| DateTime.strptime(value, '%Y-%m-%d') rescue nil } ?  properties.map{|value| date_format(value.to_date) } : properties }

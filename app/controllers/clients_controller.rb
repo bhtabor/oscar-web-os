@@ -6,7 +6,7 @@ class ClientsController < AdminController
 
   before_action :get_quantitative_fields, only: [:index]
   before_action :find_params_advanced_search, :get_custom_form, :get_program_streams, only: [:index]
-  before_action :get_custom_form_fields, :program_stream_fields, :client_builder_fields, only: [:index]
+  before_action :get_custom_form_fields, :program_stream_fields, :custom_form_fields, :client_builder_fields, only: [:index]
   before_action :basic_params, if: :has_params?, only: [:index]
   before_action :build_advanced_search, only: [:index]
   before_action :fetch_advanced_search_queries, only: [:index]
@@ -27,7 +27,7 @@ class ClientsController < AdminController
       columns_visibility
       respond_to do |f|
         f.html do
-          next unless params['commit'] == I18n.t('datagrid.form.search').html_safe
+          next unless params['commit'].present?
           client_grid             = @client_grid.scope { |scope| scope.accessible_by(current_ability) }
           @results                = client_grid.assets.size
           $client_data            = client_grid.assets
@@ -35,10 +35,19 @@ class ClientsController < AdminController
           @client_grid.scope { |scope| scope.accessible_by(current_ability).page(params[:page]).per(20) }
         end
         f.xls do
-          next unless params['commit'] == 'Search'
+          next unless params['commit'].present?
           @client_grid.scope { |scope| scope.accessible_by(current_ability) }
           export_client_reports
           send_data @client_grid.to_xls, filename: "client_report-#{Time.now}.xls"
+          # current_time = Time.now
+          # if params[:type] == 'basic_info'
+          #   export_client_reports
+          #   send_data @client_grid.to_xls, filename: "client_report-#{current_time}.xls"
+          # elsif params[:type] == 'csi_assessment'
+          #   send_data @client_grid.to_spreadsheet('default'), filename: "client_assessment_domain_report-#{current_time}.xls"
+          # elsif params[:type] == 'custom_assessment'
+          #   send_data @client_grid.to_spreadsheet('custom'), filename: "client_assessment_domain_report-#{current_time}.xls"
+          # end
         end
       end
     end

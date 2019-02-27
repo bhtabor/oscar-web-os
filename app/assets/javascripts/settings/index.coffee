@@ -3,21 +3,35 @@ CIF.SettingsIndex = CIF.SettingsEdit = CIF.SettingsUpdate = CIF.SettingsCreate =
     _initSelect2()
     _handleAssessmentCheckbox()
     _ajaxChangeDistrict()
+    _initICheckBox()
+
+  _initICheckBox = ->
+    $('.i-checks').iCheck
+      checkboxClass: 'icheckbox_square-green'
+      radioClass: 'iradio_square-green'
 
   _initSelect2 = ->
     $('select').select2()
 
   _handleAssessmentCheckbox = ->
     _disableAssessmentSetting()
-    $('#setting_disable_assessment.i-checks').on 'ifChecked', ->
+    $('#setting_enable_custom_assessment.i-checks').on 'ifUnchecked', ->
       $('#assessment-setting .panel-body').find('input, select').prop('disabled', true)
 
-    $('#setting_disable_assessment.i-checks').on 'ifUnchecked', ->
+    $('#setting_enable_custom_assessment.i-checks').on 'ifChecked', ->
       $('#assessment-setting .panel-body').find('input, select').prop('disabled', false)
 
+    $('#setting_enable_default_assessment.i-checks').on 'ifUnchecked', ->
+      $('#default-assessment-setting .panel-body').find('input, select').prop('disabled', true)
+
+    $('#setting_enable_default_assessment.i-checks').on 'ifChecked', ->
+      $('#default-assessment-setting .panel-body').find('input, select').prop('disabled', false)
+
   _disableAssessmentSetting = ->
-    disableAssessmentChecked = $('#setting_disable_assessment').is(':checked')
+    disableAssessmentChecked = $('#setting_enable_custom_assessment').is(':unchecked')
     $('#assessment-setting .panel-body').find('input, select').prop('disabled', true) if disableAssessmentChecked
+    disableDefaultAssessmentChecked = $('#setting_enable_default_assessment').is(':unchecked')
+    $('#default-assessment-setting .panel-body').find('input, select').prop('disabled', true) if disableDefaultAssessmentChecked
 
   _ajaxChangeDistrict = ->
     mainAddress = $('#setting_province_id, #setting_district_id')
@@ -47,8 +61,5 @@ CIF.SettingsIndex = CIF.SettingsEdit = CIF.SettingsUpdate = CIF.SettingsCreate =
           success: (response) ->
             for address in response.data
               subAddress.append("<option value='#{address.id}'>#{address.name}</option>")
-
-
-
 
   { init: _init }

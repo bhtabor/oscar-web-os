@@ -101,6 +101,7 @@ module ClientsHelper
       case_note_date:                t('datagrid.columns.clients.case_note_date'),
       case_note_type:                t('datagrid.columns.clients.case_note_type'),
       date_of_assessments:           t('datagrid.columns.clients.date_of_assessments'),
+      date_of_custom_assessments:    t('datagrid.columns.clients.date_of_custom_assessments'),
       changelog:                     t('datagrid.columns.clients.changelog'),
       live_with:                     t('datagrid.columns.clients.live_with'),
       # id_poor:                       t('datagrid.columns.clients.id_poor'),
@@ -181,12 +182,13 @@ module ClientsHelper
     value.is_a?(Array) ? value.delete_if(&:empty?).present? : value.present?
   end
 
+  # legacy method
   def form_builder_format_key(value)
     value.downcase.parameterize('_')
   end
 
   def form_builder_format(value)
-    value.split('_').last
+    value.split('__').last
   end
 
   def form_builder_format_header(value)
@@ -198,6 +200,7 @@ module ClientsHelper
     result.join(' | ')
   end
 
+  # legacy method
   def group_entity_by(value)
     value.group_by{ |field| field.split('_').first}
   end
@@ -210,6 +213,7 @@ module ClientsHelper
     keyword.downcase.parameterize('_')
   end
 
+  # legacy method
   def field_not_render(field)
     field.split('_').first
   end
@@ -217,9 +221,9 @@ module ClientsHelper
   def all_csi_assessment_lists(object)
     content_tag(:ul) do
       if params[:data] == 'recent'
-        object.assessments.latest_record.try(:basic_info)
+        object.latest_record.try(:basic_info)
       else
-        object.assessments.each do |assessment|
+        object.each do |assessment|
           concat(content_tag(:li, assessment.basic_info))
         end
       end
@@ -280,11 +284,6 @@ module ClientsHelper
     current_address.compact.join(', ')
   end
 
-  def enable_assessment_setting?
-    setting = Setting.first.try(:disable_assessment)
-    setting.nil? ? true : !setting
-  end
-
   def default_columns_visibility(column)
     label_column = {
       live_with_: t('datagrid.columns.clients.live_with'),
@@ -308,7 +307,7 @@ module ClientsHelper
       initial_referral_date_: t('datagrid.columns.clients.initial_referral_date'),
       referral_phone_: t('datagrid.columns.clients.referral_phone'),
       received_by_id_: t('datagrid.columns.clients.received_by'),
-      referral_source_id_: t('datagrid.columns.clients.referral_phone'),
+      referral_source_id_: t('datagrid.columns.clients.referral_source'),
       followed_up_by_id_: t('datagrid.columns.clients.follow_up_by'),
       follow_up_date_: t('datagrid.columns.clients.follow_up_date'),
       agencies_name_: t('datagrid.columns.clients.agencies_involved'),
@@ -344,6 +343,8 @@ module ClientsHelper
       case_note_type_: t('datagrid.columns.clients.case_note_type'),
       date_of_assessments_: t('datagrid.columns.clients.date_of_assessments'),
       all_csi_assessments_: t('datagrid.columns.clients.all_csi_assessments'),
+      date_of_custom_assessments_: t('datagrid.columns.clients.date_of_custom_assessments'),
+      all_custom_csi_assessments_: t('datagrid.columns.clients.all_custom_csi_assessments'),
       manage_: t('datagrid.columns.clients.manage'),
       changelog_: t('datagrid.columns.changelog'),
       telephone_number_: t('datagrid.columns.clients.telephone_number'),
@@ -609,7 +610,7 @@ module ClientsHelper
 
     if rule == 'case_note_date'
       field_name = 'meeting_date'
-    elsif rule == 'date_of_assessments'
+    elsif rule.in?(['date_of_assessments', 'date_of_custom_assessments'])
       field_name = 'created_at'
     elsif rule[/^(programexitdate)/i].present? || object.class.to_s[/^(leaveprogram)/i]
       klass_name.merge!(rule => 'leave_programs')
@@ -650,7 +651,7 @@ module ClientsHelper
 
     if Client::HEADER_COUNTS.include?(class_name) || class_name[/^(enrollmentdate)/i] || class_name[/^(programexitdate)/i]
       association = "#{class_name}_count"
-      klass_name  = { exit_date: 'exit_ngos', accepted_date: 'enter_ngos', case_note_date: 'case_notes', case_note_type: 'case_notes', date_of_assessments: 'assessments' }
+      klass_name  = { exit_date: 'exit_ngos', accepted_date: 'enter_ngos', case_note_date: 'case_notes', case_note_type: 'case_notes', date_of_assessments: 'assessments', date_of_custom_assessments: 'assessments' }
 
       if class_name[/^(programexitdate)/i].present? || class_name[/^(leaveprogram)/i]
         klass     = 'leave_programs'
@@ -681,6 +682,10 @@ module ClientsHelper
           elsif class_name[/^(enrollmentdate)/i].present?
             data_filter = date_filter(client.client_enrollments.joins(:program_stream).where(program_streams: { name: column.header.split('|').first.squish }), "#{class_name} Date")
             count += data_filter.map(&:enrollment_date).flatten.count if data_filter.present?
+          elsif class_name[/^(date_of_assessments)/i]
+            count += client.send(klass.to_sym).defaults.count
+          elsif class_name[/^(date_of_custom_assessments)/i]
+            count += client.send(klass.to_sym).customs.count
           else
             count += date_filter(client.send(klass.to_sym), class_name).flatten.count
           end
@@ -833,7 +838,7 @@ module ClientsHelper
 
   def country_scope_label_translation
     if I18n.locale.to_s == 'en'
-      country_name = Organization.current.short_name == 'cccu' ? 'uganda' : Setting.first.country_name
+      country_name = Organization.current.short_name == 'cccu' ? 'uganda' : Setting.first.try(:country_name)
       case country_name
       when 'cambodia' then '(Khmer)'
       when 'thailand' then '(Thai)'
@@ -849,4 +854,44 @@ module ClientsHelper
   def client_alias_id
     current_organization.short_name == 'fts' ? @client.code : @client.slug
   end
+
+  # we use dataTable export button instead
+  # def to_spreadsheet(assessment_type)
+  #   column_header = [
+  #                     I18n.t('clients.assessment_domain_score.client_id'), I18n.t('clients.assessment_domain_score.client_name'),
+  #                     I18n.t('clients.assessment_domain_score.assessment_number'), I18n.t('clients.assessment_domain_score.assessment_date'),
+  #                     Domain.pluck(:name)
+  #                   ]
+  #   book = Spreadsheet::Workbook.new
+  #   book.create_worksheet
+  #   book.worksheet(0).insert_row(0, column_header.flatten)
+  #
+  #   ordering = 0
+  #   assessment_domain_hash = {}
+  #
+  #   assets.includes(assessments: :assessment_domains).reorder(id: :desc).each do |client|
+  #     assessments = assessment_type == 'default' ? client.assessments.defaults : assessment_type == 'custom' ? client.assessments.customs : client.assessments
+  #     if assessment_type == 'default'
+  #       assessments = client.assessments.defaults
+  #       domains = Domain.csi_domains
+  #     elsif assessment_type == 'custom'
+  #       assessments = client.assessments.customs
+  #       domains = Domain.custom_csi_domains
+  #     else
+  #       assessments = client.assessments
+  #       domains = Domain.all
+  #     end
+  #
+  #     assessments.each_with_index do |assessment, index|
+  #       assessment_domain_hash = assessment.assessment_domains.pluck(:domain_id, :score).to_h if assessment.assessment_domains.present?
+  #       domain_scores = domains.map { |domain| assessment_domain_hash.present? ? assessment_domain_hash[domain.id] : '' }
+  #       book.worksheet(0).insert_row (ordering += 1), [client.slug, client.en_and_local_name, index + 1, date_format(assessment.created_at), domain_scores].flatten
+  #     end
+  #   end
+  #
+  #   buffer = StringIO.new
+  #   book.write(buffer)
+  #   buffer.rewind
+  #   buffer.read
+  # end
 end
